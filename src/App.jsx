@@ -1,26 +1,66 @@
-import Navbar from "./components/Navbar"
-import Hero from "./components/Hero"
-import Highlights from "./components/Highlights"
-import Model from "./components/Model"
-import Features from "./components/Features"
-import HowItWorks from "./components/HowItWorks"
-import Footer from "./components/Footer"
+import { lazy, Suspense } from 'react'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { Toaster } from 'sonner'
+import { AuthProvider } from './context/AuthContext'
+import { CartProvider } from './context/CartContext'
+import Navbar from './components/Navbar'
+import Footer from './components/Footer'
+import SimpleLoader from './components/SimpleLoader'
+import ErrorBoundary from './components/ErrorBoundary'
+import BlockedTokenModal from './components/BlockedTokenModal'
+import * as Sentry from '@sentry/react'
 
-import * as Sentry from "@sentry/react"
+const HomePage = lazy(() => import('./pages/HomePage'))
+const ContactPage = lazy(() => import('./pages/ContactPage'))
+const AboutPage = lazy(() => import('./pages/AboutPage'))
+const CartPage = lazy(() => import('./pages/CartPage'))
+const SigninPage = lazy(() => import('./pages/SigninPage'))
+const SignupPage = lazy(() => import('./pages/SignupPage'))
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'))
+const OrdersPage = lazy(() => import('./pages/OrdersPage'))
+const OrderDetailsPage = lazy(() => import('./pages/OrderDetailsPage'))
+const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'))
 
 
 const App = () => {
-    return (
-    <main className="bg-black">
-      <Navbar />
-      <Hero />
-      <Highlights />
-      <Model />
-      <Features />
-      <HowItWorks />
-      <Footer />
-    </main>
+  return (
+    <ErrorBoundary>
+      <Router>
+        <AuthProvider>
+          <CartProvider>
+            <Toaster
+              position="top-right"
+              theme="dark"
+              richColors
+              closeButton
+              expand={true}
+            />
+            <BlockedTokenModal />
+            <div className="bg-black min-h-screen flex flex-col">
+              <Navbar />
+              <main className="flex-1">
+                <Suspense fallback={<SimpleLoader />}>
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/contact" element={<ContactPage />} />
+                    <Route path="/about" element={<AboutPage />} />
+                    <Route path="/cart" element={<CartPage />} />
+                    <Route path="/signin" element={<SigninPage />} />
+                    <Route path="/signup" element={<SignupPage />} />
+                    <Route path="/checkout" element={<CheckoutPage />} />
+                    <Route path="/orders" element={<OrdersPage />} />
+                    <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
+                    <Route path="/product/:slug" element={<ProductDetailPage />} />
+                  </Routes>
+                </Suspense>
+              </main>
+              <Footer />
+            </div>
+          </CartProvider>
+        </AuthProvider>
+      </Router>
+    </ErrorBoundary>
   )
 }
 
-export default Sentry.withProfiler(App);
+export default import.meta.env.PROD ? Sentry.withProfiler(App) : App

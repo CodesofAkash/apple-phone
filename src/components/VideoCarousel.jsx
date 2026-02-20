@@ -33,28 +33,48 @@ useGSAP(() => {
         ease: 'power2.inOut'
     })
 
-    gsap.to('#video', {
-        scrollTrigger: {
-            trigger : '#video',
-            toggleActions: 'restart none none none',
-        },
-        onComplete : () => {
-            setVideo((pre) => ({...pre, startPlay : true, isPlaying: true}))
-        }
+    const ctx = gsap.context(() => {
+        gsap.to('#video', {
+            scrollTrigger: {
+                trigger : '#video',
+                toggleActions: 'restart none none none',
+                onEnter: () => {
+                    setVideo((pre) => ({...pre, startPlay : true, isPlaying: true}))
+                }
+            },
+            onComplete : () => {
+                setVideo((pre) => ({...pre, startPlay : true, isPlaying: true}))
+            }
+        })
     })
+
+    // Refresh ScrollTrigger to ensure proper positioning
+    ScrollTrigger.refresh()
+
+    return () => {
+        ctx.revert()
+        ScrollTrigger.getAll().forEach(trigger => trigger.kill())
+    }
 }, [isEnd, videoId])
 
 const [loadedData, setLoadedData] = useState([]);
 
 useEffect(() => {
-    if(loadedData.length > 3) {
-        if(!isPlaying) {
-            videoRef.current[videoId].pause();
-        } else {
-            startPlay && videoRef.current[videoId].play();
+    const currentVideo = videoRef.current[videoId];
+    if (!currentVideo) {
+        return;
+    }
+
+    if(!isPlaying) {
+        currentVideo.pause();
+    } else {
+        if(startPlay) {
+            currentVideo.play().catch(err => {
+                console.log('Video play failed:', err)
+            });
         }
     }
-}, [startPlay, videoId, isPlaying, loadedData])
+}, [startPlay, videoId, isPlaying])
 
 const handleLoadedMetaData = (i, e) => setLoadedData((prev) => [...prev, e])
 
@@ -97,12 +117,22 @@ useEffect(() => {
         }
 
         const animUpdate = () => {
-            anim.progress(videoRef.current[videoId].currentTime / hightlightsSlides[videoId].videoDuration)
+            const currentVideo = videoRef.current[videoId];
+            const duration = hightlightsSlides[videoId]?.videoDuration;
+            if (!currentVideo || !duration) {
+                return;
+            }
+
+            anim.progress(currentVideo.currentTime / duration)
         }
 
         if(isPlaying) {
             gsap.ticker.add(animUpdate)
         } else {
+            gsap.ticker.remove(animUpdate)
+        }
+
+        return () => {
             gsap.ticker.remove(animUpdate)
         }
     }

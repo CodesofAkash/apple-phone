@@ -17,12 +17,11 @@ export default [
         sourceType: 'module',
       },
     },
-    settings: { react: { version: '18.3' } },
+    settings: { react: { version: '19.2' } },
     plugins: {
       react,
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
-      '@react-three' : @react-three
     },
     rules: {
       ...js.configs.recommended.rules,

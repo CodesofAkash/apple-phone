@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// User model (uses Supabase auth)
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  orders        Order[]
+  cart          CartItem[]
+  addresses     Address[]
+  
+  @@map("users")
+}
+
+// Product model (base product like "iPhone 15 Pro")
+model Product {
+  id            String    @id @default(uuid())
+  name          String    // "iPhone 15 Pro"
+  slug          String    @unique // "iphone-15-pro"
+  description   String?
+  basePrice     Decimal   @db.Decimal(10, 2) // Starting price
+  category      String    // "iPhone", "Mac", "iPad"
+  images        String[]  // Array of image URLs
+  featured      Boolean   @default(false)
+  inStock       Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  variants      ProductVariant[]
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  
+  @@map("products")
+}
+
+// Product Variant model (specific SKU like "iPhone 15 Pro Natural Titanium 256GB")
+model ProductVariant {
+  id            String    @id @default(uuid())
+  productId     String
+  sku           String    @unique // "IPH15P-NAT-256"
+  color         String    // "Natural Titanium"
+  colorHex      String?   // "#d4c5b0" for display
+  storage       String    // "256GB"
+  size          String?   // "6.1\"" or "6.7\""
+  price         Decimal   @db.Decimal(10, 2) // Actual price for this variant
+  stockCount    Int       @default(0)
+  inStock       Boolean   @default(true)
+  images        String[]  // Variant-specific images
+  
+  product       Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@unique([productId, color, storage, size])
+  @@map("product_variants")
+}
+
+// Cart Item model (now references product + variant)
+model CartItem {
+  id            String    @id @default(uuid())
+  userId        String
+  productId     String
+  variantId     String?   // Optional: stores selected variant
+  color         String?   // Denormalized for quick access
+  storage       String?
+  size          String?
+  quantity      Int       @default(1)
+  price         Decimal   @db.Decimal(10, 2) // Price at time of adding
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product       Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, productId, variantId])
+  @@map("cart_items")
+}
+
+// Order model
+model Order {
+  id                String        @id @default(uuid())
+  orderNumber       String        @unique
+  userId            String
+  subtotal          Decimal       @db.Decimal(10, 2)
+  tax               Decimal       @db.Decimal(10, 2) @default(0)
+  shipping          Decimal       @db.Decimal(10, 2) @default(0)
+  total             Decimal       @db.Decimal(10, 2)
+  status            OrderStatus   @default(PENDING)
+  paymentStatus     PaymentStatus @default(PENDING)
+  paymentMethod     String?
+  stripePaymentId   String?       @unique
+  shippingAddressId String?
+  billingAddressId  String?
+  trackingNumber    String?
+  notes             String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items             OrderItem[]
+  statusHistory     OrderStatusHistory[]
+  shippingAddress   Address?      @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddress    Address?      @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  
+  @@map("orders")
+}
+
+// Order Item model (snapshot of product at purchase time)
+model OrderItem {
+  id            String    @id @default(uuid())
+  orderId       String
+  productId     String
+  productName   String    // Snapshot
+  productImage  String?   // Snapshot
+  color         String?
+  storage       String?
+  size          String?
+  quantity      Int
+  price         Decimal   @db.Decimal(10, 2) // Price at time of order
+  createdAt     DateTime  @default(now())
+  
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product       Product   @relation(fields: [productId], references: [id])
+  
+  @@map("order_items")
+}
+
+// Order Status History
+model OrderStatusHistory {
+  id            String      @id @default(uuid())
+  orderId       String
+  status        OrderStatus
+  notes         String?
+  createdAt     DateTime    @default(now())
+  
+  order         Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  @@map("order_status_history")
+}
+
+// Address model
+model Address {
+  id            String    @id @default(uuid())
+  userId        String
+  fullName      String
+  street        String
+  city          String
+  state         String
+  zipCode       String
+  country       String    @default("United States")
+  phone         String?
+  isDefault     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shippingOrders Order[] @relation("ShippingAddress")
+  billingOrders  Order[] @relation("BillingAddress")
+  
+  @@map("addresses")
+}
+
+// Enums
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
