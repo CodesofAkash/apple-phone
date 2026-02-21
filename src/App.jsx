@@ -20,6 +20,10 @@ const CheckoutPage = lazy(() => import('./pages/CheckoutPage'))
 const OrdersPage = lazy(() => import('./pages/OrdersPage'))
 const OrderDetailsPage = lazy(() => import('./pages/OrderDetailsPage'))
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'))
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'))
+const TermsOfUsePage = lazy(() => import('./pages/TermsOfUsePage'))
+const SalesPolicyPage = lazy(() => import('./pages/SalesPolicyPage'))
+const SiteMapPage = lazy(() => import('./pages/SiteMapPage'))
 
 
 const App = () => {
@@ -51,6 +55,10 @@ const App = () => {
                     <Route path="/orders" element={<OrdersPage />} />
                     <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
                     <Route path="/product/:slug" element={<ProductDetailPage />} />
+                    <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                    <Route path="/terms-of-use" element={<TermsOfUsePage />} />
+                    <Route path="/sales-policy" element={<SalesPolicyPage />} />
+                    <Route path="/sitemap" element={<SiteMapPage />} />
                   </Routes>
                 </Suspense>
               </main>

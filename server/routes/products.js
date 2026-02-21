@@ -7,7 +7,7 @@ router.get('/featured', async (_req, res) => {
   try {
     const product = await prisma.product.findFirst({
       where: {
-        category: 'iPhone',
+        category: 'apple phone',
         inStock: true
       },
       orderBy: {

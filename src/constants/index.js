@@ -20,12 +20,12 @@ import {
 // 1. SITE METADATA & BRANDING
 // ============================================================================
 export const SITE_CONFIG = {
-  siteName: "iPhone 15 Pro",
-  siteTitle: "iPhone 15 Pro | Premium Smartphone",
-  description: "Experience the power of iPhone 15 Pro with A17 chip and titanium design",
-  productName: "iPhone 15 Pro",
-  brandName: "Apple",
-  copyrightYear: 2024,
+  siteName: "Apple Phone 20 Pro",
+  siteTitle: "Apple Phone 20 Pro | Premium Smartphone",
+  description: "Experience the power of Apple Phone 20 Pro with A17 Pro chip and titanium design",
+  productName: "Apple Phone 20 Pro",
+  brandName: "CodesOfAkash",
+  copyrightYear: 2026,
 };
 
 // ============================================================================
@@ -38,7 +38,7 @@ export const navLists = [
 
 export const NAV_CONFIG = {
   items: navLists,
-  logoAlt: "apple",
+  logoAlt: "CodesOfAkash",
   searchAlt: "search",
   bagAlt: "bag",
 };
@@ -47,10 +47,10 @@ export const NAV_CONFIG = {
 // 3. HERO SECTION CONFIGURATION
 // ============================================================================
 export const HERO_CONFIG = {
-  title: "iPhone 15 Pro",
+  title: "Apple phone 20 Pro",
   ctaText: "Buy",
   ctaLink: "#highlights",
-  priceText: "From £199/month or $999",
+  priceText: "From ₹19999/month or ₹199999",
   mobileBreakpoint: 760, // Switch video at this width
 };
 
@@ -77,9 +77,9 @@ export const hightlightsSlides = [
   {
     id: 3,
     textLists: [
-      "iPhone 15 Pro Max has the",
+      "Apple phone 20 Pro has the",
       "longest optical zoom in",
-      "iPhone ever. Far out.",
+      "Apple phone ever. Far out.",
     ],
     video: highlightThirdVideo,
     videoDuration: 2,
@@ -108,25 +108,25 @@ export const HIGHLIGHTS_CONFIG = {
 export const models = [
   {
     id: 1,
-    title: "iPhone 15 Pro in Natural Titanium",
+    title: "Apple phone 20 Pro in Natural Titanium",
     color: ["#8F8A81", "#ffe7b9", "#6f6c64"],
     img: yellowImg,
   },
   {
     id: 2,
-    title: "iPhone 15 Pro in Blue Titanium",
+    title: "Apple phone 20 Pro in Blue Titanium",
     color: ["#53596E", "#6395ff", "#21242e"],
     img: blueImg,
   },
   {
     id: 3,
-    title: "iPhone 15 Pro in White Titanium",
+    title: "Apple phone 20 Pro in White Titanium",
     color: ["#C9C8C2", "#ffffff", "#C9C8C2"],
     img: whiteImg,
   },
   {
     id: 4,
-    title: "iPhone 15 Pro in Black Titanium",
+    title: "Apple phone 20 Pro in Black Titanium",
     color: ["#454749", "#3b3b3b", "#181819"],
     img: blackImg,
   },
@@ -155,9 +155,9 @@ export const MODEL_CONFIG = {
 // ============================================================================
 export const FEATURES_CONFIG = {
   title: "Explore the full story.",
-  subtitle: "iPhone.",
+  subtitle: "Apple phone 20 Pro.",
   subtitleSecond: "Forged in titanium",
-  featureText1: "iPhone 15 Pro is the first iPhone to feature an aerospace-grade titanium design, using the same alloy that spacecrafts use for missions to Mars.",
+  featureText1: "Apple phone 20 Pro is the first Apple phone to feature an aerospace-grade titanium design, using the same alloy that spacecrafts use for missions to Mars.",
   featureText2: "Titanium has one of the best strength-to-weight ratios of any metal, making these our lightest Pro models ever. You'll notice the difference the moment you pick one up.",
   animationScrubValue: 5.5,
 };
@@ -181,11 +181,10 @@ export const HOW_IT_WORKS_CONFIG = {
 // 8. FOOTER CONFIGURATION
 // ============================================================================
 export const footerLinks = [
-  "Privacy Policy",
-  "Terms of Use",
-  "Sales Policy",
-  "Legal",
-  "Site Map",
+  { text: "Privacy Policy", link: "/privacy-policy" },
+  { text: "Terms of Use", link: "/terms-of-use" },
+  { text: "Sales Policy", link: "/sales-policy" },
+  { text: "Site Map", link: "/sitemap" },
 ];
 
 export const FOOTER_CONFIG = {

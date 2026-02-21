@@ -23,12 +23,12 @@ async function main() {
   await prisma.product.deleteMany()
   console.log('✅ Cleared existing data')
 
-  // iPhone 15 Pro
+
   const iphone15Pro = await prisma.product.create({
     data: {
-      name: 'iPhone 15 Pro',
+      name: 'Apple phone 20 Pro',
       slug: 'iphone-15-pro',
-      description: 'The most advanced iPhone ever. With titanium design, A17 Pro chip, and breakthrough camera capabilities.',
+      description: 'The most advanced Apple phone ever. With titanium design, A17 Pro chip, and breakthrough camera capabilities.',
       basePrice: 999,
       category: 'iPhone',
       images: [

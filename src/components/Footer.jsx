@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { footerLinks } from '../constants'
 
 const Footer = () => {
@@ -7,11 +8,11 @@ const Footer = () => {
         <div className='screen-max-width'>
             <div>
                 <p className='font-semibold text-gray text-xs'>More ways to shop : {' '}
-                    <span className='underline text-apple-blue'>
+                    <span className='text-apple-blue'>
                         Find an Apple Store {' '}
                     </span>
                     or {' '}
-                    <span className='underline text-apple-blue'>
+                    <span className='text-apple-blue'>
                         other retailer
                     </span>{' '}
                     near you.
@@ -21,14 +22,20 @@ const Footer = () => {
                 </p>
             </div>
 
-            <div className='bg-neutral-700 my-5 h-[1px] w-full' />
+            <div className='bg-neutral-700 my-5 h-px w-full' />
             <div className='flex md:flex-row flex-col md:items-center justify-between'>
-                <p className='font-semibold text-gray text-xs'>Copyright @ 2024 Apple Inc. All rights reserved.
+                <p className='font-semibold text-gray text-xs'>Copyright @ 2026 CodesOfAkash. All rights reserved.
                 </p>
-                <div className='flex'>{footerLinks.map((link, i) => (
-                    <p key={link} className='font-semibold text-gray text-xs'>{link}{' '}
-                    {i !== footerLinks.length - 1 && <span className='mx-2'> | </span>}</p>
-                ))}</div>
+                <div className='flex'>
+                    {footerLinks.map((link, i) => (
+                        <React.Fragment key={link.text}>
+                            <Link to={link.link} className='font-semibold text-gray text-xs hover:text-white transition-colors'>
+                                {link.text}
+                            </Link>
+                            {i !== footerLinks.length - 1 && <span className='mx-2 font-semibold text-gray text-xs'> | </span>}
+                        </React.Fragment>
+                    ))}
+                </div>
             </div>
         </div>
     </footer>

@@ -6,6 +6,7 @@ import { TextPlugin } from 'gsap/TextPlugin'
 gsap.registerPlugin(ScrollTrigger, TextPlugin)
 
 const AboutPage = () => {
+
   useGSAP(() => {
     // Hero section animations
     gsap.to('#about-title', { 
@@ -34,15 +35,6 @@ const AboutPage = () => {
       ease: 'back.out(1.4)'
     })
 
-    // Skills animation
-    gsap.to('.skill-card', { 
-      opacity: 1, 
-      y: 0,
-      stagger: 0.1, 
-      duration: 0.8, 
-      delay: 1.2,
-      ease: 'power2.out'
-    })
 
     // Journey timeline animation with ScrollTrigger
     gsap.to('.journey-item', {
@@ -126,15 +118,6 @@ const AboutPage = () => {
     })
   }, [])
 
-  const skills = [
-    { name: 'React', level: 95, icon: '⚛️' },
-    { name: 'GSAP', level: 90, icon: '🎬' },
-    { name: 'Three.js', level: 85, icon: '🎮' },
-    { name: 'Tailwind', level: 90, icon: '🎨' },
-    { name: 'Node.js', level: 80, icon: '🟢' },
-    { name: 'TypeScript', level: 85, icon: '📘' }
-  ]
-
   const journey = [
     { year: '2020', title: 'Started Coding', description: 'Fell in love with web development' },
     { year: '2021', title: 'First Projects', description: 'Built my first real-world applications' },
@@ -173,18 +156,18 @@ const AboutPage = () => {
                 id="about-subtitle"
                 className="text-xl md:text-2xl text-gray-400 opacity-0 translate-y-10 mb-8 leading-relaxed"
               >
-                I'm a passionate <span className="text-blue-400 font-semibold">full-stack developer</span> specializing in creating stunning web experiences with modern technologies. 
+                I'm a passionate <span className="text-blue-400 font-semibold">lerner</span> who is always ready to learn new things, specializing in web dev - creating stunning web experiences with modern technologies. 
                 I love bringing designs to life with smooth animations and interactive 3D elements.
               </p>
               <div className="flex flex-wrap gap-4 opacity-0 translate-y-10" id="about-subtitle">
                 <div className="px-6 py-3 bg-linear-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-full">
-                  <span className="text-blue-400 font-semibold">Web Developer</span>
+                  <span className="text-blue-400 font-semibold">Student</span>
                 </div>
                 <div className="px-6 py-3 bg-linear-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 rounded-full">
-                  <span className="text-purple-400 font-semibold">UI/UX Enthusiast</span>
+                  <span className="text-purple-400 font-semibold">Web Developer</span>
                 </div>
                 <div className="px-6 py-3 bg-linear-to-r from-pink-600/20 to-red-600/20 border border-pink-500/30 rounded-full">
-                  <span className="text-pink-400 font-semibold">Animation Lover</span>
+                  <span className="text-pink-400 font-semibold">Aspiring Software Engineer</span>
                 </div>
               </div>
             </div>
@@ -208,103 +191,7 @@ const AboutPage = () => {
           </div>
         </div>
 
-        {/* Skills Section */}
-        <div className="screen-max-width py-20 px-5">
-          <h2 className="text-5xl font-bold mb-16 text-center">
-            My <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-purple-400">Skills</span>
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {skills.map((skill, index) => (
-              <div 
-                key={index}
-                className="skill-card opacity-0 translate-y-10 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-blue-500/50 transition-all group"
-              >
-                <div className="flex items-center gap-4 mb-4">
-                  <span className="text-4xl group-hover:scale-110 transition-transform">{skill.icon}</span>
-                  <h3 className="text-2xl font-bold">{skill.name}</h3>
-                </div>
-                <div className="w-full bg-zinc-800 rounded-full h-3 overflow-hidden">
-                  <div 
-                    className="bg-linear-to-r from-blue-500 to-purple-500 h-full rounded-full transition-all duration-1000 group-hover:from-blue-400 group-hover:to-purple-400"
-                    style={{ width: `${skill.level}%` }}
-                  ></div>
-                </div>
-                <p className="text-right text-gray-400 mt-2 text-sm">{skill.level}%</p>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Stats Section */}
-        <div className="stats-section bg-linear-to-r from-blue-600/10 to-purple-600/10 py-20">
-          <div className="screen-max-width px-5">
-            <div className="grid md:grid-cols-4 gap-8">
-              <div className="text-center">
-                <div className="stat-number text-6xl font-bold text-blue-400 mb-2" data-value="50">0</div>
-                <p className="text-gray-400 text-lg">Projects Completed</p>
-              </div>
-              <div className="text-center">
-                <div className="stat-number text-6xl font-bold text-purple-400 mb-2" data-value="5">0</div>
-                <p className="text-gray-400 text-lg">Years Experience</p>
-              </div>
-              <div className="text-center">
-                <div className="stat-number text-6xl font-bold text-pink-400 mb-2" data-value="100">0</div>
-                <p className="text-gray-400 text-lg">Happy Clients</p>
-              </div>
-              <div className="text-center">
-                <div className="stat-number text-6xl font-bold text-red-400 mb-2" data-value="25">0</div>
-                <p className="text-gray-400 text-lg">Technologies</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Journey Section */}
-        <div className="journey-section screen-max-width py-20 px-5">
-          <h2 className="text-5xl font-bold mb-16 text-center">
-            My <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-pink-400">Journey</span>
-          </h2>
-          <div className="max-w-4xl mx-auto space-y-8">
-            {journey.map((item, index) => (
-              <div 
-                key={index}
-                className={`journey-item opacity-0 flex gap-8 items-start ${
-                  index % 2 === 0 ? 'translate-x-[-100px]' : 'translate-x-[100px]'
-                }`}
-              >
-                <div className="flex-shrink-0 w-24 text-right">
-                  <span className="text-3xl font-bold text-blue-400">{item.year}</span>
-                </div>
-                <div className="flex-shrink-0 w-4 h-4 bg-linear-to-r from-blue-500 to-purple-500 rounded-full mt-2 relative">
-                  <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-500 rounded-full animate-ping"></div>
-                </div>
-                <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-purple-500/50 transition-all">
-                  <h3 className="text-2xl font-bold mb-2">{item.title}</h3>
-                  <p className="text-gray-400">{item.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Tech Stack Section */}
-        <div className="tech-section screen-max-width py-20 px-5">
-          <h2 className="text-5xl font-bold mb-16 text-center">
-            Tech <span className="text-transparent bg-clip-text bg-linear-to-r from-pink-400 to-red-400">Stack</span>
-          </h2>
-          <div className="flex flex-wrap justify-center gap-6">
-            {techStack.map((icon, index) => (
-              <div 
-                key={index}
-                className="tech-icon opacity-0 scale-0 w-20 h-20 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center text-4xl hover:border-pink-500/50 hover:scale-110 transition-all cursor-pointer"
-              >
-                {icon}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* CTA Section */}
         <div className="screen-max-width py-20 px-5">
           <div className="bg-linear-to-r from-blue-600 to-purple-600 rounded-3xl p-12 text-center">
             <h2 className="text-5xl font-bold mb-6">Let's Work Together</h2>

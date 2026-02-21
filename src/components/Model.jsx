@@ -16,7 +16,7 @@ const Model = () => {
 
     const [size, setSize] = useState('small');
     const [model, setModel] = useState({
-        title: 'iPhone 15 pro in Natural Titanium',
+        title: 'Apple Phone 20 Pro in Natural Titanium',
         color: ['#8F8A81', '#FFE789', '#6F6C64'],
         img: yellowImg,
     })
