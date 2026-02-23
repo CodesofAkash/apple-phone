@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "prisma generate && vite build",
+    "build": "prisma generate && prisma db push && vite build",
     "start": "node server/index.js",
     "dev": "vite",
     "server": "node server/index.js",
