@@ -7,10 +7,12 @@ import { useAuth } from '../context/AuthContext'
 import SimpleLoader from '../components/SimpleLoader'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
-import * as THREE from 'three'
+import { Suspense } from 'react'
+import { formatIndianCurrency } from '../utils/index'
 import Lights from '../components/Lights'
 import IPhone from '../components/IPhone'
-import { Suspense } from 'react'
+import { models } from '../constants'
+import * as THREE from 'three'
 
 const ProductDetailPage = () => {
   const { slug } = useParams()
@@ -25,8 +27,7 @@ const ProductDetailPage = () => {
   
   // Selected options
   const [selectedColor, setSelectedColor] = useState(null)
-  const [selectedStorage, setSelectedStorage] = useState(null)
-  const [selectedSize, setSelectedSize] = useState(null)
+  const [selectedSize, setSelectedSize] = useState('small')
   const [selectedVariant, setSelectedVariant] = useState(null)
   const [quantity, setQuantity] = useState(1)
   
@@ -35,21 +36,94 @@ const ProductDetailPage = () => {
   const [addSuccess, setAddSuccess] = useState(false)
 
   // 3D Model state
-  const [show3D, setShow3D] = useState(false)
+  const [modelItem, setModelItem] = useState(models[0])
+  
   const controlRef = useRef()
+  const mountedRef = useRef(true)
+  const canvasContainerRef = useRef()
+  
+  const [canvasReady, setCanvasReady] = useState(false)
+
+  // Load Canvas only when the container scrolls into view
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setCanvasReady(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '100px' }
+    )
+    if (canvasContainerRef.current) observer.observe(canvasContainerRef.current)
+    return () => observer.disconnect()
+  }, [])
+
+  const getSizeBucket = (sizeValue) => {
+    const match = String(sizeValue || '').match(/[\d.]+/)
+    if (!match) return null
+    const numericSize = Number(match[0])
+    if (Number.isNaN(numericSize)) return null
+    return numericSize <= 6.2 ? 'small' : 'large'
+  }
 
   useEffect(() => {
+    mountedRef.current = true
     loadProduct()
+    
+    return () => {
+      mountedRef.current = false
+    }
   }, [slug])
 
+  // Only animate on initial load, don't hide content
   useGSAP(() => {
-    if (product) {
-      gsap.from('#product-image', { opacity: 0, scale: 0.8, duration: 1, ease: 'back.out(1.4)' })
-      gsap.from('#product-title', { opacity: 0, y: -30, duration: 0.8, delay: 0.3 })
-      gsap.from('.option-section', { opacity: 0, y: 20, stagger: 0.15, duration: 0.8, delay: 0.5 })
-      gsap.from('#buy-section', { opacity: 0, y: 20, duration: 0.8, delay: 1 })
+    if (product && mountedRef.current) {
+      // Start from visible, just add subtle animations
+      gsap.from('#product-canvas', { 
+        opacity: 0.5, 
+        y: 20,
+        duration: 0.8, 
+        ease: 'power2.out',
+        clearProps: 'all' // Remove inline styles after animation
+      })
+      gsap.from('#product-title', { 
+        opacity: 0, 
+        y: -20, 
+        duration: 0.6, 
+        delay: 0.2,
+        clearProps: 'all'
+      })
+      gsap.from('.option-section', { 
+        opacity: 0, 
+        y: 10, 
+        stagger: 0.1, 
+        duration: 0.5, 
+        delay: 0.3,
+        clearProps: 'all'
+      })
+      gsap.from('#buy-section', { 
+        opacity: 0, 
+        y: 10, 
+        duration: 0.5, 
+        delay: 0.6,
+        clearProps: 'all'
+      })
     }
   }, [product])
+
+  // Update 3D model when color changes
+  useEffect(() => {
+    if (!selectedColor || !variants.length || !mountedRef.current) return
+
+    const colorModel = models.find(m => 
+      m.title.toLowerCase().includes(selectedColor.toLowerCase().split(' ')[0])
+    )
+
+    if (colorModel) {
+      setModelItem(colorModel)
+    }
+  }, [selectedColor, variants])
 
   const loadProduct = async () => {
     try {
@@ -59,38 +133,45 @@ const ProductDetailPage = () => {
       if (!response.ok) throw new Error('Product not found')
       
       const data = await response.json()
+      
+      if (!mountedRef.current) return
+      
       setProduct(data.product)
       setVariants(data.variants || [])
       
       // Set default selections
       if (data.variants?.length > 0) {
         const colors = [...new Set(data.variants.map(v => v.color))]
-        const storages = [...new Set(data.variants.map(v => v.storage))]
         const sizes = [...new Set(data.variants.map(v => v.size))]
-        
+
         setSelectedColor(colors[0])
-        setSelectedStorage(storages[0])
-        if (sizes.length > 0 && sizes[0]) setSelectedSize(sizes[0])
+
+        if (sizes[0]) {
+          setSelectedSize(getSizeBucket(sizes[0]) || 'small')
+        }
       }
     } catch (err) {
-      setError(err.message)
+      if (mountedRef.current) {
+        setError(err.message)
+      }
     } finally {
-      setLoading(false)
+      if (mountedRef.current) {
+        setLoading(false)
+      }
     }
   }
 
-  // Find matching variant based on selections
+  // Find matching variant
   useEffect(() => {
-    if (!selectedColor || !selectedStorage) return
+    if (!selectedColor || !mountedRef.current) return
     
-    const variant = variants.find(v => 
-      v.color === selectedColor && 
-      v.storage === selectedStorage &&
-      (selectedSize ? v.size === selectedSize : true)
+    const variant = variants.find(v =>
+      v.color === selectedColor &&
+      getSizeBucket(v.size) === selectedSize
     )
-    
-    setSelectedVariant(variant)
-  }, [selectedColor, selectedStorage, selectedSize, variants])
+
+    setSelectedVariant(variant || null)
+  }, [selectedColor, selectedSize, variants])
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
@@ -111,8 +192,7 @@ const ProductDetailPage = () => {
       price: selectedVariant.price,
       image: selectedVariant.images[0] || product.images[0],
       color: selectedColor,
-      storage: selectedStorage,
-      size: selectedSize,
+      size: selectedVariant.size,
       variantId: selectedVariant.id
     }, quantity)
 
@@ -125,7 +205,11 @@ const ProductDetailPage = () => {
         ease: 'back.out(1.7)'
       })
       
-      setTimeout(() => setAddSuccess(false), 3000)
+      setTimeout(() => {
+        if (mountedRef.current) {
+          setAddSuccess(false)
+        }
+      }, 3000)
     } else if (result.requiresAuth) {
       navigate('/signin')
     }
@@ -138,10 +222,16 @@ const ProductDetailPage = () => {
     setTimeout(() => navigate('/cart'), 500)
   }
 
-  // Get unique options
+  const handleColorChange = (color) => {
+    setSelectedColor(color)
+  }
+
+  const handleSizeChange = (size) => {
+    setSelectedSize(size)
+  }
+
   const colors = [...new Set(variants.map(v => v.color))]
-  const storages = [...new Set(variants.map(v => v.storage))]
-  const sizes = [...new Set(variants.map(v => v.size).filter(Boolean))]
+  const availableSizes = [...new Set(variants.map(v => v.size).filter(Boolean))]
 
   if (loading) return <SimpleLoader />
 
@@ -161,263 +251,271 @@ const ProductDetailPage = () => {
   const currentPrice = selectedVariant?.price || product.basePrice
 
   return (
-    <>
-      <section className="min-h-screen bg-black text-white py-20">
-        <div className="screen-max-width px-5">
-          <div className="grid lg:grid-cols-2 gap-12 items-start">
-            {/* Product Image/3D Model */}
-            <div id="product-image" className="sticky top-24">
-              <div className="relative aspect-square bg-zinc-900 rounded-3xl overflow-hidden group cursor-pointer" onClick={() => setShow3D(true)}>
-                <img
-                  src={selectedVariant?.images[0] || product.images[0]}
-                  alt={product.name}
-                  className="w-full h-full object-contain p-8"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="text-center">
-                    <svg className="w-12 h-12 text-white mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    <p className="text-white font-semibold">View in 3D</p>
-                  </div>
-                </div>
-                {addSuccess && (
-                  <div id="success-badge" className="absolute top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-full opacity-0">
-                    ✓ Added to cart!
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* 3D Modal */}
-            {show3D && (
-              <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-                <div className="relative w-full h-[90vh] max-w-4xl bg-black rounded-3xl overflow-hidden">
-                  <button
-                    onClick={() => setShow3D(false)}
-                    className="absolute top-4 right-4 z-10 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full transition-colors"
+    <section className="min-h-screen bg-black text-white py-20">
+      <div className="screen-max-width px-5">
+        <div className="grid lg:grid-cols-2 gap-12 items-start">
+          {/* 3D Model - Fixed perspective */}
+          <div id="product-canvas">
+            <div id="product-canvas" ref={canvasContainerRef}>
+              <div className="relative w-full h-150 bg-zinc-900 rounded-3xl overflow-hidden">
+                {canvasReady ? (
+                  <Canvas
+                    gl={{
+                      antialias: true,
+                      alpha: true,
+                      powerPreference: 'high-performance',
+                    }}
+                    dpr={[1, 2]}
+                    frameloop="demand"
+                    camera={{ position: [0, 0, 4], fov: 45, near: 0.1, far: 1000 }}
+                    onCreated={({ gl }) => {
+                      gl.toneMapping = THREE.ACESFilmicToneMapping
+                      gl.toneMappingExposure = 1
+                    }}
                   >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                  
-                  <Canvas className="w-full h-full">
+                    <color attach="background" args={['#18181b']} />
+                    <ambientLight intensity={0.4} />
+                    <PerspectiveCamera makeDefault position={[0, 0, 4]} fov={45} />
+                    <Lights />
                     <OrbitControls
                       ref={controlRef}
-                      enableZoom={true}
-                      enablePan={true}
+                      enableZoom={false}
+                      enablePan={false}
                       rotateSpeed={0.4}
-                      target={new THREE.Vector3(0, 0, 0)}
+                      minPolarAngle={Math.PI / 2}
+                      maxPolarAngle={Math.PI / 2}
+                      target={[0, 0, 0]}
                     />
-                    <ambientLight intensity={0.5} />
-                    <PerspectiveCamera makeDefault position={[0, 0, 4]} />
-                    <Lights />
                     <Suspense fallback={null}>
                       <group position={[0, 0, 0]}>
                         <IPhone
-                          scale={[17, 17, 17]}
-                          item={{
-                            title: product.name,
-                            color: ['#8F8A81', '#FFE789', '#6F6C64'],
-                            img: product.images[0]
-                          }}
+                          scale={selectedSize === 'small' ? [15, 15, 15] : [17, 17, 17]}
+                          item={modelItem}
                           size={selectedSize}
                         />
                       </group>
                     </Suspense>
                   </Canvas>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+                  </div>
+                )}
+
+                {addSuccess && (
+                  <div
+                    id="success-badge"
+                    className="absolute top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-full opacity-0 shadow-lg z-10 flex items-center gap-2 font-semibold"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Added to cart!
+                  </div>
+                )}
+
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-gray-400 text-sm flex items-center gap-2 bg-black/50 px-4 py-2 rounded-full backdrop-blur-sm">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
+                  </svg>
+                  Drag to rotate
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Product Options - All visible by default */}
+          <div>
+            <h1 id="product-title" className="text-5xl font-bold mb-4">{product.name}</h1>
+            <p className="text-gray-400 text-lg mb-8">{product.description}</p>
+
+            {/* Price */}
+            <div className="mb-8">
+              <p className="text-4xl font-bold text-blue-400">
+                ₹{formatIndianCurrency(currentPrice)}
+              </p>
+              {selectedVariant && selectedVariant.price !== product.basePrice && (
+                <p className="text-sm text-gray-500">
+                  Starting at ₹{formatIndianCurrency(product.basePrice)}
+                </p>
+              )}
+            </div>
+
+            {/* Color Selection */}
+            {colors.length > 0 && (
+              <div className="option-section mb-8">
+                <h3 className="text-xl font-semibold mb-4">
+                  Color: <span className="text-blue-400">{selectedColor}</span>
+                </h3>
+                <div className="flex flex-wrap gap-4">
+                  {colors.map((color) => {
+                    const variant = variants.find(v => v.color === color)
+                    return (
+                      <button
+                        key={color}
+                        onClick={() => handleColorChange(color)}
+                        className={`group relative w-16 h-16 rounded-full border-2 transition-all ${
+                          selectedColor === color
+                            ? 'border-blue-500 scale-110 shadow-lg shadow-blue-500/50'
+                            : 'border-zinc-700 hover:border-zinc-500 hover:scale-105'
+                        }`}
+                        aria-label={`Select ${color}`}
+                      >
+                        <div
+                          className="w-full h-full rounded-full"
+                          style={{ backgroundColor: variant?.colorHex || '#666' }}
+                        />
+                        {selectedColor === color && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <svg className="w-8 h-8 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
             )}
 
-            {/* Product Options */}
-            <div>
-              <h1 id="product-title" className="text-5xl font-bold mb-4">{product.name}</h1>
-              <p className="text-gray-400 text-lg mb-8">{product.description}</p>
+            {/* Size Selection */}
+            {availableSizes.length > 1 && (
+              <div className="option-section mb-8">
+                <h3 className="text-xl font-semibold mb-4">
+                  Size: <span className="text-blue-400">{selectedSize === 'small' ? '6.1"' : '6.7"'}</span>
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    onClick={() => handleSizeChange('small')}
+                    className={`p-4 rounded-xl border-2 transition-all ${
+                      selectedSize === 'small'
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border-zinc-700 hover:border-zinc-500'
+                    }`}
+                  >
+                    <p className="font-bold text-lg">6.1"</p>
+                    <p className="text-sm text-gray-400">iPhone 15 Pro</p>
+                  </button>
+                  <button
+                    onClick={() => handleSizeChange('large')}
+                    className={`p-4 rounded-xl border-2 transition-all ${
+                      selectedSize === 'large'
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border-zinc-700 hover:border-zinc-500'
+                    }`}
+                  >
+                    <p className="font-bold text-lg">6.7"</p>
+                    <p className="text-sm text-gray-400">iPhone 15 Pro Max</p>
+                  </button>
+                </div>
+              </div>
+            )}
 
-              {/* Price */}
+            {/* Quantity */}
+            <div className="option-section mb-8">
+              <h3 className="text-xl font-semibold mb-4">Quantity</h3>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="w-12 h-12 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center text-xl font-bold transition-colors"
+                  aria-label="Decrease quantity"
+                >
+                  −
+                </button>
+                <span className="text-2xl font-bold w-12 text-center">{quantity}</span>
+                <button
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="w-12 h-12 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center text-xl font-bold transition-colors"
+                  aria-label="Increase quantity"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            {/* Stock Status */}
+            {selectedVariant && (
               <div className="mb-8">
-                <p className="text-4xl font-bold text-blue-400">
-                  ${Number(currentPrice).toLocaleString()}
-                </p>
-                {selectedVariant && selectedVariant.price !== product.basePrice && (
-                  <p className="text-sm text-gray-500">
-                    Starting at ${Number(product.basePrice).toLocaleString()}
+                {selectedVariant.inStock ? (
+                  <p className="text-green-400 flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    In Stock {selectedVariant.stockCount > 0 && `- ${selectedVariant.stockCount} available`}
+                  </p>
+                ) : (
+                  <p className="text-red-400 flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    Out of Stock
                   </p>
                 )}
               </div>
+            )}
 
-              {/* Color Selection */}
-              {colors.length > 0 && (
-                <div className="option-section mb-8">
-                  <h3 className="text-xl font-semibold mb-4">
-                    Color: <span className="text-blue-400">{selectedColor}</span>
-                  </h3>
-                  <div className="flex flex-wrap gap-4">
-                    {colors.map((color) => {
-                      const variant = variants.find(v => v.color === color)
-                      return (
-                        <button
-                          key={color}
-                          onClick={() => setSelectedColor(color)}
-                          className={`group relative w-16 h-16 rounded-full border-2 transition-all ${
-                            selectedColor === color
-                              ? 'border-blue-500 scale-110'
-                              : 'border-zinc-700 hover:border-zinc-500'
-                          }`}
-                        >
-                          <div
-                            className="w-full h-full rounded-full"
-                            style={{ backgroundColor: variant?.colorHex || '#666' }}
-                          />
-                          {selectedColor === color && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <svg className="w-8 h-8 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            </div>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Storage Selection */}
-              {storages.length > 0 && (
-                <div className="option-section mb-8">
-                  <h3 className="text-xl font-semibold mb-4">
-                    Storage: <span className="text-blue-400">{selectedStorage}</span>
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {storages.map((storage) => (
-                      <button
-                        key={storage}
-                        onClick={() => setSelectedStorage(storage)}
-                        className={`p-4 rounded-xl border-2 transition-all ${
-                          selectedStorage === storage
-                            ? 'border-blue-500 bg-blue-500/10'
-                            : 'border-zinc-700 hover:border-zinc-500'
-                        }`}
-                      >
-                        <p className="font-bold text-lg">{storage}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Size Selection */}
-              {sizes.length > 1 && (
-                <div className="option-section mb-8">
-                  <h3 className="text-xl font-semibold mb-4">
-                    Size: <span className="text-blue-400">{selectedSize}</span>
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {sizes.map((size) => (
-                      <button
-                        key={size}
-                        onClick={() => setSelectedSize(size)}
-                        className={`p-4 rounded-xl border-2 transition-all ${
-                          selectedSize === size
-                            ? 'border-blue-500 bg-blue-500/10'
-                            : 'border-zinc-700 hover:border-zinc-500'
-                        }`}
-                      >
-                        <p className="font-bold text-lg">{size}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Quantity */}
-              <div className="option-section mb-8">
-                <h3 className="text-xl font-semibold mb-4">Quantity</h3>
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-12 h-12 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center text-xl font-bold transition-colors"
-                  >
-                    −
-                  </button>
-                  <span className="text-2xl font-bold w-12 text-center">{quantity}</span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="w-12 h-12 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center text-xl font-bold transition-colors"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              {/* Stock Status */}
-              {selectedVariant && (
-                <div className="mb-8">
-                  {selectedVariant.inStock ? (
-                    <p className="text-green-400 flex items-center gap-2">
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      In Stock - {selectedVariant.stockCount} available
-                    </p>
-                  ) : (
-                    <p className="text-red-400">Out of Stock</p>
-                  )}
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div id="buy-section" className="space-y-4">
-                <button
-                  onClick={handleBuyNow}
-                  disabled={addingToCart || !selectedVariant?.inStock}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-5 rounded-xl transition-all transform hover:scale-105"
-                >
-                  {addingToCart ? 'Adding...' : 'Buy Now'}
-                </button>
-                
-                <button
-                  onClick={handleAddToCart}
-                  disabled={addingToCart || !selectedVariant?.inStock}
-                  className="w-full bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-5 rounded-xl transition-colors"
-                >
-                  Add to Cart
-                </button>
-              </div>
-
-              {/* Features */}
-              <div className="mt-12 pt-8 border-t border-zinc-800">
-                <h3 className="text-xl font-semibold mb-4">Key Features</h3>
-                <ul className="space-y-3 text-gray-400">
-                  <li className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            {/* Action Buttons */}
+            <div id="buy-section" className="space-y-4">
+              <button
+                onClick={handleBuyNow}
+                disabled={addingToCart || selectedVariant?.inStock === false}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-5 rounded-xl transition-all transform hover:scale-[1.02] shadow-lg"
+              >
+                {addingToCart ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    Free shipping on all orders
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    30-day return policy
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    1-year warranty included
-                  </li>
-                </ul>
-              </div>
+                    Adding...
+                  </span>
+                ) : 'Buy Now'}
+              </button>
+              
+              <button
+                onClick={handleAddToCart}
+                disabled={addingToCart || selectedVariant?.inStock === false}
+                className="w-full bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-5 rounded-xl transition-colors"
+              >
+                Add to Cart
+              </button>
+            </div>
+
+            {/* Features */}
+            <div className="mt-12 pt-8 border-t border-zinc-800">
+              <h3 className="text-xl font-semibold mb-4">What's Included</h3>
+              <ul className="space-y-3 text-gray-400">
+                <li className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Free shipping on all orders
+                </li>
+                <li className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  30-day return policy
+                </li>
+                <li className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  1-year Apple warranty
+                </li>
+                <li className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  USB-C cable included
+                </li>
+              </ul>
             </div>
           </div>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   )
 }
 

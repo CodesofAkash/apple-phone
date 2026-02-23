@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
+import { formatIndianCurrency } from '../utils/index'
 
 const OrderDetailsPage = () => {
   const { isAuthenticated, loading: authLoading } = useAuth()
@@ -13,6 +14,7 @@ const OrderDetailsPage = () => {
   const [error, setError] = useState(null)
 
   useGSAP(() => {
+    if (!order) return
     gsap.to('.order-details-header', { opacity: 1, y: 0, duration: 0.8 })
     gsap.to('.order-section', { opacity: 1, y: 0, stagger: 0.1, duration: 0.8, delay: 0.2 })
   }, [order])
@@ -122,9 +124,17 @@ const OrderDetailsPage = () => {
               <h1 className="text-5xl font-bold mb-2">Order {order.orderNumber}</h1>
               <p className="text-gray-400">Ordered on {formatDate(order.createdAt)}</p>
             </div>
-            <span className={`px-4 py-2 rounded-full text-lg font-semibold border w-fit ${getStatusColor(order.status)}`}>
-              {order.status}
-            </span>
+            <div className="flex items-center gap-4">
+              <Link
+                to={`/orders/${orderId}/track`}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full transition-colors"
+              >
+                Track Order
+              </Link>
+              <span className={`px-4 py-2 rounded-full text-lg font-semibold border w-fit ${getStatusColor(order.status)}`}>
+                {order.status}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -156,11 +166,11 @@ const OrderDetailsPage = () => {
                               </div>
                               <div>
                                 <p className="text-gray-500">Unit Price</p>
-                                <p className="text-white">${parseFloat(item.price).toFixed(2)}</p>
+                                <p className="text-white">₹{formatIndianCurrency(item.price)}</p>
                               </div>
                               <div>
                                 <p className="text-gray-500">Subtotal</p>
-                                <p className="text-white font-semibold">${(parseFloat(item.price) * item.quantity).toFixed(2)}</p>
+                                <p className="text-white font-semibold">₹{formatIndianCurrency(Number(item.price) * item.quantity)}</p>
                               </div>
                             </div>
                           </div>
@@ -191,32 +201,6 @@ const OrderDetailsPage = () => {
                 </div>
               </div>
             )}
-
-            {/* Status History */}
-            {order.statusHistory && order.statusHistory.length > 0 && (
-              <div className="order-section opacity-0 translate-y-10">
-                <h2 className="text-2xl font-bold mb-4">Status History</h2>
-                <div className="space-y-3">
-                  {order.statusHistory.map((history, idx) => (
-                    <div key={history.id} className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-4">
-                      <div className="flex items-start gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                          {idx < order.statusHistory.length - 1 && (
-                            <div className="w-1 h-12 bg-zinc-700"></div>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold">{history.status}</p>
-                          <p className="text-sm text-gray-400">{formatDate(history.createdAt)}</p>
-                          {history.notes && <p className="text-gray-300 mt-1">{history.notes}</p>}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Order Summary */}
@@ -229,7 +213,7 @@ const OrderDetailsPage = () => {
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Subtotal</span>
-                  <span className="text-white">${(parseFloat(order.total) / 1.08).toFixed(2)}</span>
+                  <span className="text-white">₹{formatIndianCurrency(Number(order.subtotal || order.total / 1.08))}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Shipping</span>
@@ -237,7 +221,7 @@ const OrderDetailsPage = () => {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Tax</span>
-                  <span className="text-white">${(parseFloat(order.total) - parseFloat(order.total) / 1.08).toFixed(2)}</span>
+                  <span className="text-white">₹{formatIndianCurrency(Number(order.tax || order.total - order.total / 1.08))}</span>
                 </div>
               </div>
 
@@ -245,7 +229,7 @@ const OrderDetailsPage = () => {
 
               <div className="flex justify-between text-2xl font-bold">
                 <span>Total</span>
-                <span className="text-blue-400">${parseFloat(order.total).toFixed(2)}</span>
+                <span className="text-blue-400">₹{formatIndianCurrency(order.total)}</span>
               </div>
 
               <div className="h-px bg-zinc-700"></div>

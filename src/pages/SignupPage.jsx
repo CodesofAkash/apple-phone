@@ -15,11 +15,11 @@ const SignupPage = () => {
   const [error, setError] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const { signup } = useAuth()
   const navigate = useNavigate()
 
   useGSAP(() => {
-    // Floating background elements
     gsap.to('.float-bg', {
       y: -30,
       duration: 3,
@@ -29,7 +29,6 @@ const SignupPage = () => {
       stagger: 0.5
     })
 
-    // Form entrance animation
     gsap.from('#signup-container', {
       opacity: 0,
       scale: 0.9,
@@ -52,11 +51,12 @@ const SignupPage = () => {
       delay: 0.5
     })
 
-    gsap.from('#signup-button', {
-      opacity: 0,
-      y: 20,
-      duration: 0.8,
-      delay: 1.2
+    gsap.to('#signup-button', {
+      opacity: 1,
+      y: 0,
+      duration: 0.6,
+      delay: 1.1,
+      ease: 'back.out(1.2)'
     })
 
     gsap.from('#signup-footer', {
@@ -75,7 +75,8 @@ const SignupPage = () => {
     e.preventDefault()
     setError(null)
 
-    // Validation
+    const { strength } = passwordStrength(formData.password)
+
     if (!formData.name || !formData.email || !formData.password) {
       setError('All fields are required')
       gsap.to('#signup-container', {
@@ -94,8 +95,17 @@ const SignupPage = () => {
       return
     }
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters')
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters')
+      gsap.to('#signup-container', {
+        x: [-10, 10, -10, 10, 0],
+        duration: 0.4
+      })
+      return
+    }
+
+    if (strength < 5) {
+      setError('Password must be very strong')
       gsap.to('#signup-container', {
         x: [-10, 10, -10, 10, 0],
         duration: 0.4
@@ -108,7 +118,6 @@ const SignupPage = () => {
       const result = await signup(formData.email, formData.password, formData.name)
 
       if (result.success) {
-        // Success animation
         gsap.to('#signup-container', {
           scale: 0.95,
           opacity: 0,
@@ -137,8 +146,8 @@ const SignupPage = () => {
   const passwordStrength = (password) => {
     if (!password) return { strength: 0, label: '' }
     let strength = 0
-    if (password.length >= 6) strength++
-    if (password.length >= 10) strength++
+    if (password.length >= 8) strength++
+    if (password.length >= 12) strength++
     if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++
     if (/\d/.test(password)) strength++
     if (/[^a-zA-Z\d]/.test(password)) strength++
@@ -153,7 +162,6 @@ const SignupPage = () => {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4 py-20 relative overflow-hidden">
-      {/* Animated background gradients */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="float-bg absolute top-20 left-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
         <div className="float-bg absolute bottom-20 right-10 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-3xl"></div>
@@ -165,11 +173,9 @@ const SignupPage = () => {
           id="signup-container"
           className="relative"
         >
-          {/* Glassmorphism effect */}
           <div className="absolute -inset-1 bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 rounded-3xl blur opacity-20"></div>
           
           <div className="relative bg-zinc-900/90 backdrop-blur-xl border border-zinc-800/50 rounded-3xl p-10">
-            {/* Apple logo */}
             <div className="flex justify-center mb-8">
               <div className="w-16 h-16 bg-linear-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
@@ -183,7 +189,6 @@ const SignupPage = () => {
             </h1>
             <p className="text-gray-400 mb-8 text-center">Join us and start your journey</p>
 
-            {/* Error message */}
             {error && (
               <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl backdrop-blur-sm">
                 <div className="flex items-center gap-3">
@@ -196,9 +201,8 @@ const SignupPage = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Name field */}
               <div className="form-field">
-                <label className="block text-gray-300 text-sm font-semibold mb-3">
+                <label className="block text-gray-200 text-sm font-semibold mb-3">
                   Full Name
                 </label>
                 <div className="relative group">
@@ -213,15 +217,14 @@ const SignupPage = () => {
                     value={formData.name}
                     onChange={handleChange}
                     className="w-full pl-12 pr-4 py-4 bg-black/30 border border-zinc-700/50 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all text-white placeholder-gray-500"
-                    placeholder="John Doe"
+                    placeholder="Your Name"
                     required
                   />
                 </div>
               </div>
 
-              {/* Email field */}
               <div className="form-field">
-                <label className="block text-gray-300 text-sm font-semibold mb-3">
+                <label className="block text-gray-200 text-sm font-semibold mb-3">
                   Email Address
                 </label>
                 <div className="relative group">
@@ -242,9 +245,8 @@ const SignupPage = () => {
                 </div>
               </div>
 
-              {/* Password field */}
               <div className="form-field">
-                <label className="block text-gray-300 text-sm font-semibold mb-3">
+                <label className="block text-gray-200 text-sm font-semibold mb-3">
                   Password
                 </label>
                 <div className="relative group">
@@ -279,7 +281,6 @@ const SignupPage = () => {
                     )}
                   </button>
                 </div>
-                {/* Password strength indicator */}
                 {formData.password && (
                   <div className="mt-2">
                     <div className="flex gap-1 mb-1">
@@ -299,9 +300,8 @@ const SignupPage = () => {
                 )}
               </div>
 
-              {/* Confirm Password field */}
               <div className="form-field">
-                <label className="block text-gray-300 text-sm font-semibold mb-3">
+                <label className="block text-gray-200 text-sm font-semibold mb-3">
                   Confirm Password
                 </label>
                 <div className="relative group">
@@ -338,24 +338,29 @@ const SignupPage = () => {
                 </div>
               </div>
 
-              {/* Terms */}
               <div className="form-field">
                 <label className="flex items-start gap-3 cursor-pointer">
-                  <input type="checkbox" required className="mt-1 w-4 h-4 rounded border-zinc-700 bg-black/30 checked:bg-blue-600" />
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    required
+                    className="mt-1 w-4 h-4 rounded border-zinc-700 bg-black/30 checked:bg-blue-600"
+                  />
                   <span className="text-sm text-gray-400">
                     I agree to the{' '}
-                    <Link to="/terms" className="text-blue-400 hover:text-blue-300">Terms of Service</Link>
+                    <Link to="/terms-of-use" className="text-blue-400 hover:text-blue-300">Terms of Service</Link>
                     {' '}and{' '}
-                    <Link to="/privacy" className="text-blue-400 hover:text-blue-300">Privacy Policy</Link>
+                    <Link to="/privacy-policy" className="text-blue-400 hover:text-blue-300">Privacy Policy</Link>
                   </span>
                 </label>
               </div>
 
-              {/* Submit button */}
               <button
                 id="signup-button"
                 type="submit"
-                disabled={loading}
+                disabled={loading || !termsAccepted || strength < 5}
+                style={{ opacity: 0, transform: 'translateY(20px)' }}
                 className="group relative w-full overflow-hidden bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-white font-bold py-5 rounded-xl transition-all transform hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <div className="absolute inset-0 bg-linear-to-r from-blue-400 via-purple-400 to-pink-400 opacity-0 group-hover:opacity-100 transition-opacity blur"></div>
@@ -380,7 +385,6 @@ const SignupPage = () => {
               </button>
             </form>
 
-            {/* Footer */}
             <div id="signup-footer" className="mt-8 text-center">
               <p className="text-gray-400">
                 Already have an account?{' '}

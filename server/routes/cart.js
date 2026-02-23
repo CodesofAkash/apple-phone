@@ -4,7 +4,6 @@ import { authMiddleware } from '../middleware/auth.js'
 
 const router = express.Router()
 
-// Get cart for authenticated user
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const cart = await prisma.cartItem.findMany({
@@ -17,16 +16,14 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 })
 
-// Add item to cart
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { productId, quantity } = req.body
+    const { productId, quantity, variantId } = req.body
 
     if (!productId || !quantity) {
       return res.status(400).json({ error: 'Product ID and quantity required' })
     }
 
-    // Check if product exists
     const product = await prisma.product.findUnique({
       where: { id: productId }
     })
@@ -35,12 +32,25 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Product not found' })
     }
 
-    // Check if item already in cart
+    let variant = null
+    if (variantId) {
+      variant = await prisma.productVariant.findUnique({
+        where: { id: variantId }
+      })
+
+      if (!variant || variant.productId !== productId) {
+        return res.status(400).json({ error: 'Invalid product variant' })
+      }
+    }
+
+    const cartPrice = variant ? variant.price : product.basePrice
+
     const existingItem = await prisma.cartItem.findUnique({
       where: {
-        userId_productId: {
+        userId_productId_variantId: {
           userId: req.userId,
-          productId
+          productId,
+          variantId: variant?.id || null
         }
       }
     })
@@ -48,18 +58,21 @@ router.post('/', authMiddleware, async (req, res) => {
     let cartItem
 
     if (existingItem) {
-      // Update quantity
       cartItem = await prisma.cartItem.update({
         where: { id: existingItem.id },
         data: { quantity: existingItem.quantity + quantity },
         include: { product: true }
       })
     } else {
-      // Create new cart item
       cartItem = await prisma.cartItem.create({
         data: {
           userId: req.userId,
           productId,
+          variantId: variant?.id || null,
+          color: variant?.color || null,
+          storage: variant?.storage || null,
+          size: variant?.size || null,
+          price: cartPrice,
           quantity
         },
         include: { product: true }
@@ -73,7 +86,6 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 })
 
-// Update cart item quantity
 router.put('/:cartItemId', authMiddleware, async (req, res) => {
   try {
     const { quantity } = req.body

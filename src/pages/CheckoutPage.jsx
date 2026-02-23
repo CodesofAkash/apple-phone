@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { toast } from 'sonner'
+import { formatIndianCurrency } from '../utils/index'
 
 // Initialize Stripe with error handling
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
@@ -441,7 +442,7 @@ const CheckoutForm = () => {
         disabled={!stripe || loading}
         className="w-full bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-5 rounded-xl transition-all transform hover:scale-105"
       >
-        {loading ? 'Processing...' : `Pay $${(getCartTotal() * 1.08).toFixed(2)}`}
+        {loading ? 'Processing...' : `Pay ₹${formatIndianCurrency(getCartTotal() * 1.08)}`}
       </button>
     </form>
   )
@@ -548,7 +549,7 @@ const CheckoutPage = () => {
                         {item.product.name} x {item.quantity}
                       </span>
                       <span className="text-white">
-                        ${(parseFloat(item.product.price) * item.quantity).toFixed(2)}
+                        ₹{formatIndianCurrency(Number(item.price || 0) * item.quantity)}
                       </span>
                     </div>
                   ))}
@@ -557,7 +558,7 @@ const CheckoutPage = () => {
                   
                   <div className="flex justify-between">
                     <span className="text-gray-400">Subtotal</span>
-                    <span>${getCartTotal().toFixed(2)}</span>
+                    <span>₹{formatIndianCurrency(getCartTotal())}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Shipping</span>
@@ -565,7 +566,7 @@ const CheckoutPage = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Tax (8%)</span>
-                    <span>${(getCartTotal() * 0.08).toFixed(2)}</span>
+                    <span>₹{formatIndianCurrency(getCartTotal() * 0.08)}</span>
                   </div>
                   
                   <div className="h-px bg-zinc-800"></div>
@@ -573,7 +574,7 @@ const CheckoutPage = () => {
                   <div className="flex justify-between text-2xl font-bold">
                     <span>Total</span>
                     <span className="text-blue-400">
-                      ${(getCartTotal() * 1.08).toFixed(2)}
+                      ₹{formatIndianCurrency(getCartTotal() * 1.08)}
                     </span>
                   </div>
                 </div>

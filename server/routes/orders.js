@@ -29,6 +29,26 @@ router.post('/create', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Shipping information required' })
     }
 
+    const orderItems = items.map((item) => {
+      const unitPrice = Number(item.price || item.product?.basePrice || 0)
+      return {
+        productId: item.productId || item.product?.id,
+        quantity: item.quantity,
+        price: unitPrice,
+        productName: item.product?.name || item.productName || 'Unknown Product',
+        productImage: item.product?.images?.[0] || item.productImage || null
+      }
+    })
+
+    if (orderItems.some(item => !item.productId || !Number.isFinite(item.price))) {
+      return res.status(400).json({ error: 'Invalid order items' })
+    }
+
+    const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    const parsedTotal = Number(total)
+    const finalTotal = Number.isFinite(parsedTotal) && parsedTotal > 0 ? parsedTotal : subtotal
+    const tax = Math.max(0, finalTotal - subtotal)
+
     // Generate order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
 
@@ -37,7 +57,9 @@ router.post('/create', authMiddleware, async (req, res) => {
       data: {
         orderNumber,
         userId,
-        total: parseFloat(total),
+        subtotal,
+        tax,
+        total: finalTotal,
         status: 'CONFIRMED',
         paymentStatus: 'PAID',
         paymentMethod: 'card',
@@ -45,13 +67,7 @@ router.post('/create', authMiddleware, async (req, res) => {
         // Create order items
         items: {
           createMany: {
-            data: items.map(item => ({
-              productId: item.product.id,
-              quantity: item.quantity,
-              price: parseFloat(item.product.price),
-              productName: item.product.name,
-              productImage: item.product.image
-            }))
+            data: orderItems
           }
         }
       },
@@ -238,6 +254,62 @@ router.get('/', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Orders fetch error:', error)
     res.status(500).json({ error: 'Failed to fetch orders' })
+  }
+})
+
+// Update order status (for fake shipping progression)
+router.put('/:orderId/status', authMiddleware, async (req, res) => {
+  try {
+    const { orderId } = req.params
+    const { status } = req.body
+    const userId = req.userId
+
+    if (!status) {
+      return res.status(400).json({ error: 'Status is required' })
+    }
+
+    const validStatuses = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED']
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' })
+    }
+
+    // Verify order belongs to user
+    const order = await prisma.order.findUnique({
+      where: { id: orderId }
+    })
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' })
+    }
+
+    if (order.userId !== userId) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    // Update order status
+    const updatedOrder = await prisma.order.update({
+      where: { id: orderId },
+      data: { status },
+      include: {
+        items: true,
+        shippingAddress: true,
+        statusHistory: true
+      }
+    })
+
+    // Create status history entry
+    await prisma.orderStatusHistory.create({
+      data: {
+        orderId,
+        status,
+        notes: `Order status updated to ${status}`
+      }
+    })
+
+    res.json(updatedOrder)
+  } catch (error) {
+    console.error('Order status update error:', error)
+    res.status(500).json({ error: 'Failed to update order status' })
   }
 })
 

@@ -55,3 +55,8 @@ export const explore1Img = explore1;
 export const explore2Img = explore2;
 export const chipImg = chip;
 export const frameImg = frame;
+
+// Format amounts in Indian Rupee style (e.g., 10,00,000)
+export const formatIndianCurrency = (amount) => {
+  return Number(amount).toLocaleString('en-IN')
+}

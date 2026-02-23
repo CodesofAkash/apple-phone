@@ -4,7 +4,6 @@ import { authMiddleware } from '../middleware/auth.js'
 
 const router = express.Router()
 
-// Get user profile
 router.get('/profile', authMiddleware, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
@@ -28,7 +27,6 @@ router.get('/profile', authMiddleware, async (req, res) => {
   }
 })
 
-// Update user profile
 router.put('/profile', authMiddleware, async (req, res) => {
   try {
     const { name, email } = req.body
@@ -51,7 +49,6 @@ router.put('/profile', authMiddleware, async (req, res) => {
   }
 })
 
-// Get user addresses
 router.get('/addresses', authMiddleware, async (req, res) => {
   try {
     const addresses = await prisma.address.findMany({
@@ -69,7 +66,6 @@ router.get('/addresses', authMiddleware, async (req, res) => {
   }
 })
 
-// Add new address
 router.post('/addresses', authMiddleware, async (req, res) => {
   try {
     const { fullName, street, city, state, zipCode, country, phone, isDefault } = req.body
@@ -99,7 +95,6 @@ router.post('/addresses', authMiddleware, async (req, res) => {
   }
 })
 
-// Update address
 router.put('/addresses/:addressId', authMiddleware, async (req, res) => {
   try {
     const { addressId } = req.params
@@ -135,7 +130,6 @@ router.put('/addresses/:addressId', authMiddleware, async (req, res) => {
   }
 })
 
-// Delete address
 router.delete('/addresses/:addressId', authMiddleware, async (req, res) => {
   try {
     const { addressId } = req.params

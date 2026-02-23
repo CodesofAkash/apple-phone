@@ -16,7 +16,6 @@ const SigninPage = () => {
   const navigate = useNavigate()
 
   useGSAP(() => {
-    // Floating background elements
     gsap.to('.float-bg', {
       y: -30,
       duration: 3,
@@ -26,7 +25,6 @@ const SigninPage = () => {
       stagger: 0.5
     })
 
-    // Form entrance animation
     gsap.from('#signin-container', {
       opacity: 0,
       scale: 0.9,
@@ -75,8 +73,6 @@ const SigninPage = () => {
 
     if (!formData.email || !formData.password) {
       setError('Email and password are required')
-      
-      // Error shake animation
       gsap.to('#signin-container', {
         x: [-10, 10, -10, 10, 0],
         duration: 0.4
@@ -89,7 +85,6 @@ const SigninPage = () => {
       const result = await signin(formData.email, formData.password)
 
       if (result.success) {
-        // Success animation
         gsap.to('#signin-container', {
           scale: 0.95,
           opacity: 0,
@@ -117,7 +112,6 @@ const SigninPage = () => {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4 py-20 relative overflow-hidden">
-      {/* Animated background gradients */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="float-bg absolute top-20 left-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
         <div className="float-bg absolute bottom-20 right-10 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-3xl"></div>
@@ -129,11 +123,9 @@ const SigninPage = () => {
           id="signin-container"
           className="relative"
         >
-          {/* Glassmorphism effect */}
           <div className="absolute -inset-1 bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 rounded-3xl blur opacity-20"></div>
           
           <div className="relative bg-zinc-900/90 backdrop-blur-xl border border-zinc-800/50 rounded-3xl p-10">
-            {/* Apple logo */}
             <div className="flex justify-center mb-8">
               <div className="w-16 h-16 bg-linear-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
@@ -147,7 +139,6 @@ const SigninPage = () => {
             </h1>
             <p className="text-gray-400 mb-8 text-center">Sign in to continue your journey</p>
 
-            {/* Session expired notice */}
             {sessionExpiredNotice && (
               <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
                 <div className="flex items-start gap-3">
@@ -173,7 +164,6 @@ const SigninPage = () => {
               </div>
             )}
 
-            {/* Error message */}
             {error && (
               <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl backdrop-blur-sm">
                 <div className="flex items-center gap-3">
@@ -186,7 +176,6 @@ const SigninPage = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Email field */}
               <div className="form-field">
                 <label className="block text-gray-300 text-sm font-semibold mb-3">
                   Email Address
@@ -209,7 +198,6 @@ const SigninPage = () => {
                 </div>
               </div>
 
-              {/* Password field */}
               <div className="form-field">
                 <label className="block text-gray-300 text-sm font-semibold mb-3">
                   Password
@@ -248,14 +236,15 @@ const SigninPage = () => {
                 </div>
               </div>
 
-              {/* Forgot password */}
               <div className="form-field text-right">
-                <Link to="/forgot-password" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                <Link
+                  to={`/forgot-password?email=${encodeURIComponent(formData.email)}`}
+                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                >
                   Forgot password?
                 </Link>
               </div>
 
-              {/* Submit button */}
               <button
                 id="signin-button"
                 type="submit"
@@ -282,7 +271,6 @@ const SigninPage = () => {
               </button>
             </form>
 
-            {/* Footer */}
             <div id="signin-footer" className="mt-8 text-center">
               <p className="text-gray-400">
                 Don't have an account?{' '}

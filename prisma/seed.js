@@ -24,13 +24,13 @@ async function main() {
   console.log('✅ Cleared existing data')
 
 
-  const iphone15Pro = await prisma.product.create({
+  const ApplePhone20Pro = await prisma.product.create({
     data: {
       name: 'Apple phone 20 Pro',
-      slug: 'iphone-15-pro',
+      slug: 'apple-phone',
       description: 'The most advanced Apple phone ever. With titanium design, A17 Pro chip, and breakthrough camera capabilities.',
-      basePrice: 999,
-      category: 'iPhone',
+      basePrice: 199999,
+      category: 'Apple Phone',
       images: [
         '/assets/images/yellow.jpg',
         '/assets/images/explore1.jpg',
@@ -42,13 +42,13 @@ async function main() {
   })
 
   // iPhone 15 Pro Max
-  const iphone15ProMax = await prisma.product.create({
+  const ApplePhone20ProMax = await prisma.product.create({
     data: {
       name: 'iPhone 15 Pro Max',
       slug: 'iphone-15-pro-max',
       description: 'The ultimate iPhone with the largest display and best battery life. Features titanium design and A17 Pro chip.',
       basePrice: 1199,
-      category: 'iPhone',
+      category: 'Apple Phone',
       images: [
         '/assets/images/yellow.jpg',
         '/assets/images/explore1.jpg',
@@ -69,25 +69,22 @@ async function main() {
   ]
 
   // Storage options with price increases
-  const storageOptions = [
-    { size: '128GB', priceIncrease: 0 },
-    { size: '256GB', priceIncrease: 100 },
-    { size: '512GB', priceIncrease: 300 },
-    { size: '1TB', priceIncrease: 500 },
+  const sizeOptions = [
+    { size: '6.1', priceIncrease: 0 },
+    { size: '6.7', priceIncrease: 50000 },
   ]
 
-  // Create variants for iPhone 15 Pro (6.1")
   for (const color of colors) {
-    for (const storage of storageOptions) {
+    for (const size of sizeOptions) {
       await prisma.productVariant.create({
         data: {
-          productId: iphone15Pro.id,
-          sku: `IPH15P-${color.name.substring(0, 3).toUpperCase()}-${storage.size}`,
+          productId: ApplePhone20Pro.id,
+          sku: `IPH20P-${color.name.substring(0, 3).toUpperCase()}-${size.size}`,
           color: color.name,
           colorHex: color.hex,
-          storage: storage.size,
-          size: '6.1"',
-          price: 999 + storage.priceIncrease,
+          storage: size.size,
+          size: size.size,
+          price: 199999 + size.priceIncrease,
           stockCount: 50,
           inStock: true,
           images: [color.image],
@@ -96,18 +93,17 @@ async function main() {
     }
   }
 
-  // Create variants for iPhone 15 Pro Max (6.7")
   for (const color of colors) {
-    for (const storage of storageOptions) {
+    for (const size of sizeOptions) {
       await prisma.productVariant.create({
         data: {
-          productId: iphone15ProMax.id,
-          sku: `IPH15PM-${color.name.substring(0, 3).toUpperCase()}-${storage.size}`,
+          productId: ApplePhone20ProMax.id,
+          sku: `IPH20PM-${color.name.substring(0, 3).toUpperCase()}-${size.size}`,
           color: color.name,
           colorHex: color.hex,
-          storage: storage.size,
-          size: '6.7"',
-          price: 1199 + storage.priceIncrease,
+          storage: size.size,
+          size: size.size,
+          price: 1199 + size.priceIncrease,
           stockCount: 30,
           inStock: true,
           images: [color.image],
@@ -118,42 +114,6 @@ async function main() {
 
   console.log('✅ Created product variants')
 
-  // Create some additional products
-  const products = [
-    {
-      name: 'iPhone 15',
-      slug: 'iphone-15',
-      description: 'The new iPhone 15. Dynamic Island. 48MP camera. All-day battery life.',
-      basePrice: 799,
-      category: 'iPhone',
-      images: ['/assets/images/yellow.jpg'],
-      featured: false,
-    },
-    {
-      name: 'MacBook Pro 14"',
-      slug: 'macbook-pro-14',
-      description: 'Supercharged by M3 Pro or M3 Max. Up to 22 hours of battery life.',
-      basePrice: 1999,
-      category: 'Mac',
-      images: ['/assets/images/yellow.jpg'],
-      featured: false,
-    },
-    {
-      name: 'iPad Pro',
-      slug: 'ipad-pro',
-      description: 'The ultimate iPad experience with M2 chip and Liquid Retina XDR display.',
-      basePrice: 1099,
-      category: 'iPad',
-      images: ['/assets/images/yellow.jpg'],
-      featured: false,
-    },
-  ]
-
-  for (const product of products) {
-    await prisma.product.create({ data: product })
-  }
-
-  console.log('✅ Created additional products')
   console.log('🎉 Seed completed successfully!')
 }
 

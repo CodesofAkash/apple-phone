@@ -1,0 +1,50 @@
+{
+  "name": "Apple Phone 20 Pro",
+  "short_name": "Apple Phone",
+  "description": "Premium smartphone with A17 Pro chip and titanium design",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/assets/images/apple.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Shop Now",
+      "short_name": "Shop",
+      "description": "Browse and purchase Apple Phone 20 Pro",
+      "url": "/products/apple-phone",
+      "icons": [{"src": "/assets/images/apple.svg", "sizes": "192x192"}]
+    },
+    {
+      "name": "View Cart",
+      "short_name": "Cart",
+      "description": "View your shopping cart",
+      "url": "/cart",
+      "icons": [{"src": "/assets/images/bag.svg", "sizes": "192x192"}]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/images/apple.svg",
+      "sizes": "540x720",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["shopping", "business"],
+  "screenshots_large": [
+    {
+      "src": "/assets/images/apple.svg",
+      "sizes": "1280x720",
+      "type": "image/svg+xml"
+    }
+  ]
+}

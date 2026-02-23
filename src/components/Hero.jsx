@@ -6,9 +6,7 @@ import { useEffect } from "react";
 import { useNavigate } from 'react-router-dom'
 
 const Hero = () => {
-
   const navigate = useNavigate()
-
   const [videoSrc, setVideoSrc] = useState(window.innerWidth < 760 ? smallHeroVideo : heroVideo)
 
   const handleVideoSrcSet = () => {
@@ -21,12 +19,10 @@ const Hero = () => {
 
   useEffect(() => {
     window.addEventListener('resize', handleVideoSrcSet);
-
     return () => {
       window.removeEventListener('resize', handleVideoSrcSet);
     }
   }, [])
-
 
   useGSAP(() => {
     gsap.to('#hero-title', {
@@ -43,10 +39,6 @@ const Hero = () => {
     })
   }, [])
 
-  const handleClick = async () => {
-    navigate('/product/apple-phone-20-pro')
-  }
-
   return (
     <section className="w-full nav-height bg-black relative">
       <div className="h-5/6 w-full flex-center flex-col">
@@ -59,7 +51,7 @@ const Hero = () => {
       </div>
 
       <div id="cta" className="flex flex-col items-center opacity-0 translate-y-20">
-        <button onClick={handleClick} className="btn">Buy</button>
+        <button onClick={() => navigate('/products/apple-phone')} className="btn">Buy</button>
         <p className="font-normal text-xl">From ₹19999/month or ₹199999</p>
       </div>
     </section>

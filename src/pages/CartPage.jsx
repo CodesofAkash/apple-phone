@@ -4,6 +4,7 @@ import gsap from 'gsap'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
+import { formatIndianCurrency } from '../utils/index'
 import { toast } from 'sonner'
 
 const CartPage = () => {
@@ -87,9 +88,9 @@ const CartPage = () => {
                   <div className="flex gap-6">
                     {/* Product Image */}
                     <div className="flex-shrink-0 w-32 h-32 bg-zinc-800 rounded-2xl overflow-hidden">
-                      {item.product.image ? (
+                      {item.product?.images?.[0] ? (
                         <img 
-                          src={item.product.image} 
+                          src={item.product.images[0]} 
                           alt={item.product.name}
                           className="w-full h-full object-cover"
                         />
@@ -104,9 +105,9 @@ const CartPage = () => {
                     <div className="flex-1">
                       <h3 className="text-2xl font-bold mb-2">{item.product.name}</h3>
                       <p className="text-gray-400 mb-4">
-                        {item.product.color && <span>{item.product.color}</span>}
-                        {item.product.size && <span> • {item.product.size}</span>}
-                        {item.product.storage && <span> • {item.product.storage}</span>}
+                        {item.color && <span>{item.color}</span>}
+                        {item.size && <span> • {item.size}</span>}
+                        {item.storage && <span> • {item.storage}</span>}
                       </p>
 
                       <div className="flex items-center justify-between">
@@ -130,10 +131,10 @@ const CartPage = () => {
                         {/* Price */}
                         <div className="text-right">
                           <p className="text-2xl font-bold text-blue-400">
-                            ${(parseFloat(item.product.price) * item.quantity).toFixed(2)}
+                            ₹{formatIndianCurrency(Number(item.price || 0) * item.quantity)}
                           </p>
                           <p className="text-sm text-gray-500">
-                            ${parseFloat(item.product.price).toFixed(2)} each
+                            ₹{formatIndianCurrency(Number(item.price || 0))} each
                           </p>
                         </div>
                       </div>
@@ -164,7 +165,7 @@ const CartPage = () => {
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between text-gray-400">
                     <span>Subtotal</span>
-                    <span>${getCartTotal().toFixed(2)}</span>
+                    <span>₹{formatIndianCurrency(getCartTotal())}</span>
                   </div>
                   <div className="flex justify-between text-gray-400">
                     <span>Shipping</span>
@@ -172,13 +173,13 @@ const CartPage = () => {
                   </div>
                   <div className="flex justify-between text-gray-400">
                     <span>Tax</span>
-                    <span>${(getCartTotal() * 0.08).toFixed(2)}</span>
+                    <span>₹{formatIndianCurrency(getCartTotal() * 0.08)}</span>
                   </div>
                   <div className="h-px bg-zinc-800"></div>
                   <div className="flex justify-between text-2xl font-bold">
                     <span>Total</span>
                     <span className="text-blue-400">
-                      ${(getCartTotal() * 1.08).toFixed(2)}
+                      ₹{formatIndianCurrency(getCartTotal() * 1.08)}
                     </span>
                   </div>
                 </div>

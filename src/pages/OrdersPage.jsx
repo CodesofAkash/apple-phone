@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
+import { formatIndianCurrency } from '../utils/index'
 
 const OrdersPage = () => {
   const { isAuthenticated, user, loading: authLoading } = useAuth()
@@ -147,7 +148,7 @@ const OrdersPage = () => {
                         </div>
                         <div>
                           <p className="text-gray-500">Total</p>
-                          <p className="text-white font-semibold text-lg">${parseFloat(order.total).toFixed(2)}</p>
+                          <p className="text-white font-semibold text-lg">₹{formatIndianCurrency(order.total)}</p>
                         </div>
                         <div>
                           <p className="text-gray-500">Payment</p>

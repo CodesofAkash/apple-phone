@@ -67,6 +67,11 @@ export const CartProvider = ({ children }) => {
         },
         body: JSON.stringify({
           productId: product.id,
+          variantId: product.variantId || null,
+          color: product.color || null,
+          storage: product.storage || null,
+          size: product.size || null,
+          price: product.price,
           quantity,
         }),
       })
@@ -84,10 +89,10 @@ export const CartProvider = ({ children }) => {
       
       // Update local state
       setCart((prevCart) => {
-        const existingItem = prevCart.find((item) => item.productId === product.id)
+        const existingItem = prevCart.find((item) => item.productId === product.id && item.variantId === (product.variantId || null))
         if (existingItem) {
           return prevCart.map((item) =>
-            item.productId === product.id
+            item.productId === product.id && item.variantId === (product.variantId || null)
               ? { ...item, quantity: item.quantity + quantity }
               : item
           )
@@ -182,7 +187,7 @@ export const CartProvider = ({ children }) => {
 
   const getCartTotal = useCallback(() => {
     return cart.reduce((total, item) => {
-      const price = parseFloat(item.product?.price || 0)
+      const price = Number(item.price || item.product?.basePrice || 0)
       return total + price * item.quantity
     }, 0)
   }, [cart])

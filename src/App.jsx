@@ -16,15 +16,16 @@ const AboutPage = lazy(() => import('./pages/AboutPage'))
 const CartPage = lazy(() => import('./pages/CartPage'))
 const SigninPage = lazy(() => import('./pages/SigninPage'))
 const SignupPage = lazy(() => import('./pages/SignupPage'))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'))
 const OrdersPage = lazy(() => import('./pages/OrdersPage'))
 const OrderDetailsPage = lazy(() => import('./pages/OrderDetailsPage'))
+const OrderTrackingPage = lazy(() => import('./pages/OrderTrackingPage'))
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'))
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'))
 const TermsOfUsePage = lazy(() => import('./pages/TermsOfUsePage'))
 const SalesPolicyPage = lazy(() => import('./pages/SalesPolicyPage'))
 const SiteMapPage = lazy(() => import('./pages/SiteMapPage'))
-
 
 const App = () => {
   return (
@@ -51,10 +52,12 @@ const App = () => {
                     <Route path="/cart" element={<CartPage />} />
                     <Route path="/signin" element={<SigninPage />} />
                     <Route path="/signup" element={<SignupPage />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                     <Route path="/checkout" element={<CheckoutPage />} />
                     <Route path="/orders" element={<OrdersPage />} />
                     <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
-                    <Route path="/product/:slug" element={<ProductDetailPage />} />
+                    <Route path="/orders/:orderId/track" element={<OrderTrackingPage />} />
+                    <Route path="/products/:slug" element={<ProductDetailPage />} />
                     <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
                     <Route path="/terms-of-use" element={<TermsOfUsePage />} />
                     <Route path="/sales-policy" element={<SalesPolicyPage />} />
