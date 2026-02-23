@@ -14,6 +14,8 @@ import orderRoutes from './routes/orders.js'
 const app = express()
 const PORT = process.env.PORT || 5000
 
+app.set('trust proxy', 1)
+
 app.use(helmet())
 app.use(compression({
   level: 6,
