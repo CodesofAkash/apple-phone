@@ -19,6 +19,7 @@
   "dependencies": {
     "@emailjs/browser": "^4.3.3",
     "@gsap/react": "^2.1.2",
+    "@prisma/adapter-pg": "^7.4.1",
     "@prisma/client": "^7.4.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
