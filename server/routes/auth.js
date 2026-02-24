@@ -142,11 +142,7 @@ router.post('/forgot-password', async (req, res) => {
         data: { resetOtp: otp, resetOtpExpires }
       })
 
-      await sendResetOtpEmail({
-        to: email,
-        otp,
-        name: user.name || ''
-      })
+      await sendResetOtpEmail(email, otp)
     }
 
     res.json({ message: 'If an account exists, an OTP was sent.' })
