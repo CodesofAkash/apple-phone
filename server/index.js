@@ -17,20 +17,21 @@ const PORT = process.env.PORT || 5000
 app.set('trust proxy', 1)
 
 const allowedOrigins = [
-  "https://apple-phone--codesofakash.vercel.app",
   "http://localhost:5173",
   "http://localhost:3000",
+  "https://apple-phone--codesofakash.vercel.app",
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.some(o => origin.startsWith(o))) {
+    if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
-    return callback(null, true); // ⚠ don't block preflight
+    console.log("CORS blocked origin:", origin);
+    return callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -50,7 +51,6 @@ app.use(cookieParser())
 
 app.use((req, res, next) => {
   res.set({
-    'Cache-Control': 'public, max-age=3600',
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
     'X-XSS-Protection': '1; mode=block',
