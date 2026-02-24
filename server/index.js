@@ -16,26 +16,9 @@ const PORT = process.env.PORT || 5000
 
 app.set('trust proxy', 1)
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "https://apple-phone--codesofakash.vercel.app",
-];
-
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    console.log("CORS blocked origin:", origin);
-    return callback(new Error("Not allowed by CORS"));
-  },
+  origin: true,
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
 app.use(helmet())
