@@ -31,7 +31,7 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // allow curl/postman
+    if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
@@ -45,7 +45,7 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
-app.options("*", cors());
+app.options("/*", cors());
 
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ limit: '10mb', extended: true }))
