@@ -20,35 +20,33 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
   "https://apple-phone--codesofakash.vercel.app",
-];
+]
 
+// CORS first, before helmet
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    console.log("CORS blocked origin:", origin);
-    return callback(new Error("Not allowed by CORS"));
+    if (!origin) return callback(null, true)
+    if (allowedOrigins.includes(origin)) return callback(null, true)
+    console.log("CORS blocked origin:", origin)
+    return callback(new Error("Not allowed by CORS"))
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-}));
-
-app.use(helmet())
-
-app.use(compression({
-  level: 6,
-  threshold: 0,
 }))
 
+// Helmet AFTER cors, with crossOriginResourcePolicy disabled
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+  crossOriginOpenerPolicy: false,
+}))
+
+app.use(compression({ level: 6, threshold: 0 }))
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ limit: '10mb', extended: true }))
 app.use(cookieParser())
 
+// Security headers but NO Cache-Control here
 app.use((req, res, next) => {
   res.set({
     'X-Content-Type-Options': 'nosniff',
