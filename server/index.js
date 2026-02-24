@@ -31,21 +31,19 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
+    if (!origin) return callback(null, true); // allow curl/postman
 
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
     console.log("CORS blocked origin:", origin);
-    return callback(new Error("Not allowed by CORS"));
+    return callback(null, false);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
-
-app.options("/*", cors());
 
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ limit: '10mb', extended: true }))
