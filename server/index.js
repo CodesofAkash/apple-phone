@@ -16,13 +16,6 @@ const PORT = process.env.PORT || 5000
 
 app.set('trust proxy', 1)
 
-app.use(helmet())
-
-app.use(compression({
-  level: 6,
-  threshold: 0,
-}))
-
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
@@ -31,19 +24,26 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // allow curl/postman
+    if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
     console.log("CORS blocked origin:", origin);
-    return callback(null, false);
+    return callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
+
+app.use(helmet())
+
+app.use(compression({
+  level: 6,
+  threshold: 0,
+}))
 
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ limit: '10mb', extended: true }))
