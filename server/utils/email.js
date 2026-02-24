@@ -14,7 +14,7 @@ export async function sendResetOtpEmail(email, otp) {
         <p>This OTP expires in 10 minutes.</p>
       `
     })
-    console.log('✅ Email sent to:', email)
+    console.log('✅ Email sent to:', email, "OTP:", otp)
   } catch (error) {
     console.error('❌ Failed to send email:', error)
     throw new Error('Failed to send OTP email: ' + error.message)
