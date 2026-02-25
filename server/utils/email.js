@@ -1,20 +1,27 @@
-import { Resend } from 'resend'
+import nodemailer from 'nodemailer'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const transporter = nodemailer.createTransport({
+  host: 'smtp-relay.brevo.com',
+  port: 587,
+  auth: {
+    user: process.env.BREVO_SMTP_LOGIN,
+    pass: process.env.BREVO_SMTP_KEY,
+  },
+})
 
-export async function sendResetOtpEmail(email, otp) {
+export async function sendResetOtpEmail(to, otp) {
   try {
-    await resend.emails.send({
-      from: 'onboarding@resend.dev', // use this until you verify a domain
-      to: email,
+    await transporter.sendMail({
+      from: '"Apple Phone Store" <noreply@apple-phone.app>',
+      to,
       subject: 'Your Password Reset OTP',
       html: `
         <h2>Password Reset</h2>
         <p>Your OTP is: <strong>${otp}</strong></p>
-        <p>This OTP expires in 10 minutes.</p>
+        <p>This expires in 10 minutes.</p>
       `
     })
-    console.log('✅ Email sent to:', email, "OTP:", otp)
+    console.log('✅ Email sent to:', to)
   } catch (error) {
     console.error('❌ Failed to send email:', error)
     throw new Error('Failed to send OTP email: ' + error.message)
