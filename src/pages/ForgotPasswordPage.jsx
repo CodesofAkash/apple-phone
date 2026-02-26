@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
+import { toast } from 'sonner'
 
 const ForgotPasswordPage = () => {
   const [searchParams] = useSearchParams()
@@ -54,6 +55,7 @@ const ForgotPasswordPage = () => {
     return { strength, label: labels[strength], color: colors[strength] }
   }
 
+
   const handleSendOtp = async () => {
     setError(null)
     setSuccess(null)
@@ -72,12 +74,32 @@ const ForgotPasswordPage = () => {
       })
 
       const data = await response.json()
+
       if (!response.ok) {
         setError(data?.error || 'Failed to send OTP')
         return
       }
 
-      setSuccess('OTP sent. Check your email.')
+      if (data.emailSent) {
+        setSuccess('OTP sent. Check your email.')
+        toast.success('OTP sent to your email!')
+      } else {
+        // Email failed — show OTP in toast
+        setSuccess('Email delivery unavailable. Your OTP is shown below.')
+        toast('Your OTP', {
+          description: `${data.otp}`,
+          duration: 30000, // 30 seconds so they can copy it
+          action: {
+            label: 'Copy',
+            onClick: () => {
+              navigator.clipboard.writeText(data.otp)
+              toast.success('OTP copied!')
+            }
+          }
+        })
+        // Also auto-fill the OTP field
+        setFormData(prev => ({ ...prev, otp: data.otp }))
+      }
     } catch (err) {
       setError(err.message || 'Failed to send OTP')
     } finally {

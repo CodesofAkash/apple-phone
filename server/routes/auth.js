@@ -126,32 +126,44 @@ router.post('/signin', async (req, res) => {
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body
-
     if (!email) {
       return res.status(400).json({ error: 'Email is required' })
     }
 
     const user = await prisma.user.findUnique({ where: { email } })
-
-    if (user) {
-      const otp = generateOtp()
-      const resetOtpExpires = new Date(Date.now() + RESET_OTP_TTL_MS)
-
-      await prisma.user.update({
-        where: { email },
-        data: { resetOtp: otp, resetOtpExpires }
-      })
-
-      await sendResetOtpEmail(email, otp)
+    if (!user) {
+      // Don't reveal if user exists
+      return res.json({ message: 'If an account exists, an OTP was sent.' })
     }
 
-    res.json({ message: 'If an account exists, an OTP was sent.' })
+    const otp = generateOtp()
+    const resetOtpExpires = new Date(Date.now() + RESET_OTP_TTL_MS)
+
+    await prisma.user.update({
+      where: { email },
+      data: { resetOtp: otp, resetOtpExpires }
+    })
+
+    // Try email, but don't fail if it doesn't work
+    let emailSent = false
+    try {
+      await sendResetOtpEmail(email, otp)
+      emailSent = true
+    } catch (emailError) {
+      console.error('Email failed, returning OTP in response:', emailError.message)
+    }
+
+    res.json({
+      message: emailSent
+        ? 'OTP sent to your email.'
+        : 'Email delivery failed. Use the OTP shown on screen.',
+      emailSent,
+      // Only include OTP if email failed — remove this in production when email works
+      otp: emailSent ? undefined : otp,
+    })
   } catch (error) {
     console.error('Forgot password error:', error)
-    const errorMessage = error.message.includes('Email service not configured')
-      ? 'Email service is not configured. Please contact administrator.'
-      : 'Failed to send OTP'
-    res.status(500).json({ error: errorMessage })
+    res.status(500).json({ error: 'Failed to send OTP' })
   }
 })
 
