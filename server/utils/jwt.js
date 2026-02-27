@@ -32,8 +32,8 @@ export const verifyTokenWithCode = (token) => {
 export const setAuthCookie = (res, token) => {
   res.cookie(AUTH_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: true,
+    sameSite: 'none',
     maxAge: AUTH_COOKIE_MAX_AGE
   })
 }
@@ -41,7 +41,7 @@ export const setAuthCookie = (res, token) => {
 export const clearAuthCookie = (res) => {
   res.clearCookie(AUTH_COOKIE_NAME, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
+    secure: true,
+    sameSite: 'none'
   })
 }
