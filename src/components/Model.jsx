@@ -24,34 +24,36 @@ const Model = () => {
   const [smallRotation, setSmallRotation] = useState(0)
   const [largeRotation, setLargeRotation] = useState(0)
 
-  const tl = useRef(gsap.timeline())
+  // Start as null — created fresh each time size changes
+  const tl = useRef(null)
 
   useGSAP(() => {
-    // Kill and recreate timeline on each size change to prevent stacking
-    tl.current.kill()
+    // Kill previous timeline before creating a new one
+    if (tl.current) {
+      tl.current.kill()
+      tl.current = null
+    }
     tl.current = gsap.timeline()
 
     if (size === 'large') {
-      animateWithGsapTimeline(tl.current, small, smallRotation, '#view1', '#view2', {
-        transform: 'translateX(-100%)',
-        duration: 2,
-      })
+      animateWithGsapTimeline(
+        tl.current, small, smallRotation,
+        '#view1', '#view2',
+        { transform: 'translateX(-100%)', duration: 2 }
+      )
     }
+
     if (size === 'small') {
-      animateWithGsapTimeline(tl.current, large, largeRotation, '#view2', '#view1', {
-        transform: 'translateX(0)',
-        duration: 2,
-      })
+      animateWithGsapTimeline(
+        tl.current, large, largeRotation,
+        '#view2', '#view1',
+        { transform: 'translateX(0)', duration: 2 }
+      )
     }
   }, [size])
 
   useGSAP(() => {
-    gsap.to('#heading', {
-      y: 0,
-      opacity: 1,
-      delay: 0.5,
-      ease: 'power2.inOut',
-    })
+    gsap.to('#heading', { y: 0, opacity: 1, delay: 0.5, ease: 'power2.inOut' })
   }, [])
 
   return (
@@ -93,8 +95,6 @@ const Model = () => {
                 overflow: 'hidden',
               }}
               eventSource={document.getElementById('root')}
-              // Use 'always' so color/size changes render immediately
-              // 'demand' was causing blank screen after prop changes
               frameloop="always"
               dpr={[1, 2]}
               gl={{ antialias: true, powerPreference: 'high-performance' }}
