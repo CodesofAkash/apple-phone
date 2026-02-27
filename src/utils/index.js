@@ -1,62 +1,42 @@
-import hero from "/assets/images/hero.jpeg";
+// ─── Cloudinary URLs ─────────────────────────────────────────────────────────
+// All heavy assets served from Cloudinary CDN instead of bundled in Vercel
 
-export const heroImg = hero;
+// Videos
+export const heroVideo           = 'https://res.cloudinary.com/ddawd3kp5/video/upload/v1772161077/hero_duyvcp.mp4'
+export const smallHeroVideo      = 'https://res.cloudinary.com/ddawd3kp5/video/upload/v1772161078/smallHero_szet5y.mp4'
+export const highlightFirstVideo = 'https://res.cloudinary.com/ddawd3kp5/video/upload/v1772161081/highlight-first_xvyx6z.mp4'
+export const highlightSecondVideo = 'https://res.cloudinary.com/ddawd3kp5/video/upload/v1772161094/hightlight-third_k4auvk.mp4'
+export const highlightThirdVideo = 'https://res.cloudinary.com/ddawd3kp5/video/upload/v1772161067/hightlight-sec_oxr7z1.mp4'
+export const highlightFourthVideo = 'https://res.cloudinary.com/ddawd3kp5/video/upload/v1772161093/hightlight-fourth_hj4ig8.mp4'
+export const exploreVideo        = 'https://res.cloudinary.com/ddawd3kp5/video/upload/v1772161087/explore_babd9p.mp4'
+export const frameVideo          = 'https://res.cloudinary.com/ddawd3kp5/video/upload/v1772161092/frame_gbj015.mp4'
 
-import hmv from "/assets/videos/hero.mp4";
-import smallmv from "/assets/videos/smallHero.mp4";
-import highlightFirstmv from "/assets/videos/highlight-first.mp4";
-import highlightSectmv from "/assets/videos/hightlight-third.mp4";
-import highlightThirdmv from "/assets/videos/hightlight-sec.mp4";
-import highlightFourthmv from "/assets/videos/hightlight-fourth.mp4";
-import exploremv from "/assets/videos/explore.mp4";
-import framemv from "/assets/videos/frame.mp4";
+// Phone colour images
+export const yellowImg   = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162526/yellow_nonlnh.jpg'
+export const blueImg     = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162503/blue_jhw8ea.jpg'
+export const whiteImg    = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162511/white_xngfzk.jpg'
+export const blackImg    = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162423/black_njj7wt.jpg'
 
-import apple from "/assets/images/apple.svg";
-import search from "/assets/images/search.svg";
-import bag from "/assets/images/bag.svg";
-import watch from "/assets/images/watch.svg";
-import right from "/assets/images/right.svg";
-import replay from "/assets/images/replay.svg";
-import play from "/assets/images/play.svg";
-import pause from "/assets/images/pause.svg";
+// Section images
+export const heroImg     = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162415/hero_gczgur.jpg'
+export const explore1Img = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162368/explore1_zwzw1j.jpg'
+export const explore2Img = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162390/explore2_fhpcpr.jpg'
+export const chipImg     = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162398/chip_z8re30.jpg'
+export const frameImg    = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162374/frame_hwrbrt.png'
 
-import yellow from "/assets/images/yellow.jpg";
-import blue from "/assets/images/blue.jpg";
-import white from "/assets/images/white.jpg";
-import black from "/assets/images/black.jpg";
-import explore1 from "/assets/images/explore1.jpg";
-import explore2 from "/assets/images/explore2.jpg";
-import chip from "/assets/images/chip.jpeg";
-import frame from "/assets/images/frame.png";
+// Icons
+export const appleImg  = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162335/apple_aspv2g.svg'
+export const searchImg = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162389/search_cfwb9b.svg'
+export const bagImg    = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162335/bag_rrxtou.svg'
+export const watchImg  = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162391/watch_w58iso.svg'
+export const rightImg  = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162384/right_etoscq.svg'
+export const replayImg = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162382/replay_zo4nxk.svg'
+export const playImg   = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162381/play_r4yu7b.svg'
+export const pauseImg  = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162377/pause_v6fl77.svg'
 
-export const heroVideo = hmv;
-export const smallHeroVideo = smallmv;
-export const highlightFirstVideo = highlightFirstmv;
-export const highlightSecondVideo = highlightSectmv;
-export const highlightThirdVideo = highlightThirdmv;
-export const highlightFourthVideo = highlightFourthmv;
-export const exploreVideo = exploremv;
-export const frameVideo = framemv;
+// 3D model — Cloudinary uploaded this as image type
+export const sceneGlb  = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772161129/scene_eny4jy.glb'
 
-export const appleImg = apple;
-export const searchImg = search;
-export const bagImg = bag;
-export const watchImg = watch;
-export const rightImg = right;
-export const replayImg = replay;
-export const playImg = play;
-export const pauseImg = pause;
-
-export const yellowImg = yellow;
-export const blueImg = blue;
-export const whiteImg = white;
-export const blackImg = black;
-export const explore1Img = explore1;
-export const explore2Img = explore2;
-export const chipImg = chip;
-export const frameImg = frame;
-
-// Format amounts in Indian Rupee style (e.g., 10,00,000)
-export const formatIndianCurrency = (amount) => {
-  return Number(amount).toLocaleString('en-IN')
-}
+// ─── Utility ─────────────────────────────────────────────────────────────────
+export const formatIndianCurrency = (amount) =>
+  Number(amount).toLocaleString('en-IN')
