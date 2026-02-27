@@ -1,4 +1,6 @@
-const CACHE_NAME = 'apple-phone-v1';
+const CACHE_NAME = 'apple-phone-v2';
+
+// Only cache local static assets — never external URLs or media
 const urlsToCache = [
   '/',
   '/index.html',
@@ -7,66 +9,72 @@ const urlsToCache = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
   );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames.map((name) => {
+          if (name !== CACHE_NAME) return caches.delete(name);
+        })
+      )
+    )
+  );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Never intercept:
+  // 1. Cloudinary CDN requests (videos/images/models)
+  // 2. Railway API requests
+  // 3. Any media (video/audio) requests
+  // 4. Cross-origin requests
+  if (
+    url.hostname.includes('cloudinary.com') ||
+    url.hostname.includes('railway.app') ||
+    url.hostname.includes('sentry.io') ||
+    request.destination === 'video' ||
+    request.destination === 'audio' ||
+    url.origin !== self.location.origin
+  ) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // API calls — network first, no caching
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(networkFirst(request));
-  } else {
-    event.respondWith(cacheFirst(request));
-  }
-});
-
-async function cacheFirst(request) {
-  const cache = await caches.open(CACHE_NAME);
-  const response = await cache.match(request);
-  return response || fetch(request).then((response) => {
-    if (!response || response.status !== 200 || response.type !== 'basic') {
-      return response;
-    }
-    const responseToCache = response.clone();
-    cache.put(request, responseToCache);
-    return response;
-  });
-}
-
-async function networkFirst(request) {
-  const cache = await caches.open(CACHE_NAME);
-  try {
-    const response = await fetch(request);
-    if (response.status === 200) {
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch {
-    const cached = await cache.match(request);
-    return cached || new Response('Offline - content unavailable', {
-      status: 503,
-      statusText: 'Service Unavailable',
-      headers: new Headers({
-        'Content-Type': 'text/plain'
-      })
-    });
-  }
-}
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
+    event.respondWith(
+      fetch(request).catch(() =>
+        new Response(JSON.stringify({ error: 'Offline' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' },
         })
-      );
-    })
+      )
+    );
+    return;
+  }
+
+  // Local static assets — cache first
+  event.respondWith(
+    caches.match(request).then(
+      (cached) =>
+        cached ||
+        fetch(request).then((response) => {
+          // Only cache valid same-origin responses
+          if (!response || response.status !== 200 || response.type !== 'basic') {
+            return response;
+          }
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          return response;
+        })
+    )
   );
 });
