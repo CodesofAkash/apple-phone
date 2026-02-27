@@ -24,11 +24,13 @@ const Model = () => {
   const [smallRotation, setSmallRotation] = useState(0)
   const [largeRotation, setLargeRotation] = useState(0)
 
-  // Timeline must live in a ref — creating it outside useGSAP caused a new
-  // timeline instance on every render, stacking animations
   const tl = useRef(gsap.timeline())
 
   useGSAP(() => {
+    // Kill and recreate timeline on each size change to prevent stacking
+    tl.current.kill()
+    tl.current = gsap.timeline()
+
     if (size === 'large') {
       animateWithGsapTimeline(tl.current, small, smallRotation, '#view1', '#view2', {
         transform: 'translateX(-100%)',
@@ -82,12 +84,18 @@ const Model = () => {
 
             <Canvas
               className="w-full h-full"
-              style={{ position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, overflow: 'hidden' }}
+              style={{
+                position: 'fixed',
+                top: 0,
+                bottom: 0,
+                left: 0,
+                right: 0,
+                overflow: 'hidden',
+              }}
               eventSource={document.getElementById('root')}
-              // Only re-render when something actually changes — massive GPU saving
-              frameloop="demand"
-              // Cap pixel ratio at 2: rendering at 3x/4x on high-DPI screens
-              // multiplies GPU load for no visible benefit
+              // Use 'always' so color/size changes render immediately
+              // 'demand' was causing blank screen after prop changes
+              frameloop="always"
               dpr={[1, 2]}
               gl={{ antialias: true, powerPreference: 'high-performance' }}
             >
