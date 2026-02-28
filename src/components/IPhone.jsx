@@ -3,7 +3,6 @@ import { useGLTF, useTexture } from '@react-three/drei'
 import { Color, Box3, Vector3 } from 'three'
 import { sceneGlb } from '../utils'
 
-// Materials that should NOT have their color changed (screen, special parts)
 const EXCLUDED_MATERIALS = new Set([
   'ujsvqBWRMnqdwPx',
   'hUlRcbieVuIiOXG',
@@ -12,8 +11,8 @@ const EXCLUDED_MATERIALS = new Set([
 ])
 
 function IPhone(props) {
-const { nodes, materials } = useGLTF(sceneGlb)
-const groupRef = useRef(null)
+  const { nodes, materials } = useGLTF(sceneGlb)
+  const groupRef = useRef(null)
   const texture = useTexture(props.item.img)
 
   useEffect(() => {
@@ -25,7 +24,6 @@ const groupRef = useRef(null)
     })
   }, [materials, props.item])
 
-  // Center the model once on mount — nodes never changes so empty dep array is correct
   useLayoutEffect(() => {
     if (!groupRef.current) return
     const box = new Box3().setFromObject(groupRef.current)
@@ -33,12 +31,9 @@ const groupRef = useRef(null)
     groupRef.current.position.sub(center)
   }, [])
 
-  // Dispose GPU resources when component unmounts to prevent memory leaks
   useEffect(() => {
     return () => {
-      Object.values(materials).forEach((material) => {
-        material.dispose()
-      })
+      Object.values(materials).forEach((material) => material.dispose())
       Object.values(nodes).forEach((node) => {
         if (node.geometry) node.geometry.dispose()
       })
@@ -85,5 +80,3 @@ const groupRef = useRef(null)
 }
 
 export default memo(IPhone)
-
-useGLTF.preload(sceneGlb)

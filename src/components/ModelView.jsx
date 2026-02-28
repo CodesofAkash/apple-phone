@@ -1,51 +1,28 @@
 import { OrbitControls, PerspectiveCamera, View, Html, useProgress } from '@react-three/drei'
-import { memo } from 'react'
+import { memo, Suspense } from 'react'
 import { Vector3 } from 'three'
+import { useGLTF } from '@react-three/drei'
 import Lights from './Lights'
-import { Suspense } from 'react'
 import IPhone from './IPhone'
+import { sceneGlb } from '../utils'
 
 const ORBIT_TARGET = new Vector3(0, 0, 0)
 
-// Must be rendered inside Canvas/View context — uses Html from drei
-// Regular React spinner won't work here
 const CanvasLoader = () => {
   const { progress } = useProgress()
   return (
-    <Html
-      as="div"
-      center
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexDirection: 'column',
-      }}
-    >
-      <span className="canvas-loader" />
-      <p
-        style={{
-          fontSize: 14,
-          color: '#F1F1F1',
-          fontWeight: 800,
-          marginTop: 40,
-        }}
-      >
-        {progress !== 0 ? `${progress.toFixed(2)}%` : 'Loading...'}
-      </p>
+    <Html center>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <span className="canvas-loader" />
+        <p style={{ color: '#fff', fontSize: 13, fontWeight: 600, marginTop: 40 }}>
+          {progress > 0 ? `${progress.toFixed(0)}%` : 'Loading...'}
+        </p>
+      </div>
     </Html>
   )
 }
 
-const ModelView = ({
-  index,
-  groupRef,
-  gsapType,
-  controlRef,
-  setRotationState,
-  size,
-  item,
-}) => {
+const ModelView = ({ index, groupRef, gsapType, controlRef, setRotationState, size, item }) => {
   return (
     <View
       index={index}

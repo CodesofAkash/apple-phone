@@ -11,9 +11,6 @@ import productRoutes from './routes/products.js'
 import paymentRoutes from './routes/payment.js'
 import orderRoutes from './routes/orders.js'
 
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
-
 const app = express()
 const PORT = process.env.PORT || 5000
 
@@ -58,19 +55,6 @@ app.use((req, res, next) => {
   })
   next()
 })
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-
-app.use('/models', express.static(join(__dirname, 'public/models'), {
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.glb')) {
-      res.set('Content-Type', 'model/gltf-binary')
-      res.set('Cache-Control', 'public, max-age=31536000, immutable')
-      res.set('Access-Control-Allow-Origin', '*')
-    }
-  }
-}))
 
 app.use('/api/auth', authRoutes)
 app.use('/api/user', userRoutes)

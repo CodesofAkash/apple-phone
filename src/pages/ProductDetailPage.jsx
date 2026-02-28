@@ -6,8 +6,8 @@ import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import SimpleLoader from '../components/SimpleLoader'
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, PerspectiveCamera, Html, useProgress } from '@react-three/drei'
-import { formatIndianCurrency } from '../utils/index'
+import { OrbitControls, PerspectiveCamera, Html, useProgress, useGLTF } from '@react-three/drei'
+import { formatIndianCurrency, sceneGlb } from '../utils/index'
 import Lights from '../components/Lights'
 import IPhone from '../components/IPhone'
 import { models } from '../constants'
@@ -191,6 +191,9 @@ const ProductDetailPage = () => {
                   onCreated={({ gl }) => {
                     gl.toneMapping = THREE.ACESFilmicToneMapping
                     gl.toneMappingExposure = 1
+                    // Clear any stale GLTF cache from module-level preload
+                    // that ran before Canvas existed — prevents permanent loading state
+                    useGLTF.clear(sceneGlb)
                   }}
                 >
                   <color attach="background" args={['#18181b']} />
