@@ -8,7 +8,7 @@ import Footer from './components/Footer'
 import SimpleLoader from './components/SimpleLoader'
 import ErrorBoundary from './components/ErrorBoundary'
 import BlockedTokenModal from './components/BlockedTokenModal'
-import * as Sentry from '@sentry/react'
+import { withProfiler } from '@sentry/react'
 
 const HomePage = lazy(() => import('./pages/HomePage'))
 const ContactPage = lazy(() => import('./pages/ContactPage'))
@@ -74,4 +74,4 @@ const App = () => {
   )
 }
 
-export default import.meta.env.PROD ? Sentry.withProfiler(App) : App
+export default import.meta.env.PROD ? withProfiler(App) : App
