@@ -36,7 +36,8 @@ router.post('/create', authMiddleware, async (req, res) => {
         quantity: item.quantity,
         price: unitPrice,
         productName: item.product?.name || item.productName || 'Unknown Product',
-        productImage: item.product?.images?.[0] || item.productImage || null
+        productImage: item.product?.images?.[0] || item.productImage || null,
+        color: item.color || null
       }
     })
 
