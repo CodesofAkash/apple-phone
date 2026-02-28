@@ -1,11 +1,11 @@
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import ModelView from '../components/ModelView'
-import { useRef, useState } from 'react'
-import { yellowImg } from '../utils'
+import { useRef, useState, useEffect } from 'react'
+import { yellowImg, sceneGlb } from '../utils'
 import { models, sizes } from '../constants'
 import { Group } from 'three'
-import { View } from '@react-three/drei'
+import { View, useGLTF } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { animateWithGsapTimeline } from '../utils/animations'
 
@@ -26,6 +26,11 @@ const Model = () => {
 
   // Start as null — created fresh each time size changes
   const tl = useRef(null)
+
+  // Clear stale GLTF cache on mount so GLB loads fresh inside Canvas
+  useEffect(() => {
+    useGLTF.clear(sceneGlb)
+  }, [])
 
   useGSAP(() => {
     // Kill previous timeline before creating a new one

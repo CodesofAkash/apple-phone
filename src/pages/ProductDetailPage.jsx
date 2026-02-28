@@ -55,6 +55,12 @@ const ProductDetailPage = () => {
 
   const [canvasReady, setCanvasReady] = useState(false)
 
+  // Clear stale GLTF cache BEFORE canvas mounts so the GLB loads fresh
+  // (clearing inside onCreated is too late — useGLTF hook already ran)
+  useEffect(() => {
+    useGLTF.clear(sceneGlb)
+  }, [])
+
   // Lazy-mount Canvas only when scrolled into view
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -191,9 +197,6 @@ const ProductDetailPage = () => {
                   onCreated={({ gl }) => {
                     gl.toneMapping = THREE.ACESFilmicToneMapping
                     gl.toneMappingExposure = 1
-                    // Clear any stale GLTF cache from module-level preload
-                    // that ran before Canvas existed — prevents permanent loading state
-                    useGLTF.clear(sceneGlb)
                   }}
                 >
                   <color attach="background" args={['#18181b']} />
