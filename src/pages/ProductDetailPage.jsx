@@ -6,14 +6,13 @@ import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import SimpleLoader from '../components/SimpleLoader'
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, PerspectiveCamera, Html, useProgress, useGLTF } from '@react-three/drei'
+import { OrbitControls, Html, useProgress, useGLTF } from '@react-three/drei'
 import { formatIndianCurrency, sceneGlb } from '../utils/index'
 import Lights from '../components/Lights'
 import IPhone from '../components/IPhone'
 import { models } from '../constants'
-import * as THREE from 'three'
 
-// Must live inside Canvas context — uses drei Html so it renders in WebGL space
+// Lives inside Canvas — uses drei Html so it works in WebGL space
 const CanvasLoader = () => {
   const { progress } = useProgress()
   return (
@@ -21,10 +20,39 @@ const CanvasLoader = () => {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
         <span className="canvas-loader" />
         <p style={{ color: '#fff', fontSize: 13, fontWeight: 600, marginTop: 40 }}>
-          {progress > 0 ? `${progress.toFixed(0)}%` : 'Loading...'}
+          {progress > 0 ? `${progress.toFixed(0)}%` : 'Loading 3D model...'}
         </p>
       </div>
     </Html>
+  )
+}
+
+// Separate component so useGLTF runs inside its own Canvas context
+// The `key` prop on this component forces a full remount when slug changes,
+// which destroys the old Canvas/GL context and creates a fresh one.
+// This prevents stale cached GLB references from the homepage's shared Canvas.
+const ModelScene = ({ modelItem, selectedSize }) => {
+  return (
+    <Canvas
+      gl={{ antialias: true, powerPreference: 'high-performance' }}
+      dpr={[1, 2]}
+      frameloop="always"
+    >
+      <ambientLight intensity={0.3} />
+      <Lights />
+      <OrbitControls
+        enableZoom={false}
+        enablePan={false}
+        rotateSpeed={0.4}
+      />
+      <Suspense fallback={<CanvasLoader />}>
+        <IPhone
+          scale={selectedSize === 'small' ? [15, 15, 15] : [17, 17, 17]}
+          item={modelItem}
+          size={selectedSize}
+        />
+      </Suspense>
+    </Canvas>
   )
 }
 
@@ -49,32 +77,7 @@ const ProductDetailPage = () => {
 
   const [modelItem, setModelItem] = useState(models[0])
 
-  const controlRef = useRef()
   const mountedRef = useRef(true)
-  const canvasContainerRef = useRef()
-
-  const [canvasReady, setCanvasReady] = useState(false)
-
-  // Clear stale GLTF cache BEFORE canvas mounts so the GLB loads fresh
-  // (clearing inside onCreated is too late — useGLTF hook already ran)
-  useEffect(() => {
-    useGLTF.clear(sceneGlb)
-  }, [])
-
-  // Lazy-mount Canvas only when scrolled into view
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setCanvasReady(true)
-          observer.disconnect()
-        }
-      },
-      { rootMargin: '100px' }
-    )
-    if (canvasContainerRef.current) observer.observe(canvasContainerRef.current)
-    return () => observer.disconnect()
-  }, [])
 
   const getSizeBucket = (sizeValue) => {
     const match = String(sizeValue || '').match(/[\d.]+/)
@@ -83,6 +86,18 @@ const ProductDetailPage = () => {
     return Number.isNaN(n) ? null : n <= 6.2 ? 'small' : 'large'
   }
 
+  // Clear GLB cache on mount so this page always loads fresh
+  // The homepage Model.jsx caches the GLB in a shared Canvas context.
+  // When we navigate here that Canvas is gone but the cache still holds
+  // dead GL references → model never renders. Clearing forces a fresh load.
+  useEffect(() => {
+    useGLTF.clear(sceneGlb)
+    return () => {
+      // Also clear on unmount so homepage reloads fresh too
+      useGLTF.clear(sceneGlb)
+    }
+  }, [])
+
   useEffect(() => {
     mountedRef.current = true
     loadProduct()
@@ -90,15 +105,14 @@ const ProductDetailPage = () => {
   }, [slug])
 
   useGSAP(() => {
-    if (!product || !mountedRef.current) return
-    gsap.from('#product-canvas', { opacity: 0.5, y: 20, duration: 0.8, ease: 'power2.out', clearProps: 'all' })
+    if (!product) return
     gsap.from('#product-title', { opacity: 0, y: -20, duration: 0.6, delay: 0.2, clearProps: 'all' })
     gsap.from('.option-section', { opacity: 0, y: 10, stagger: 0.1, duration: 0.5, delay: 0.3, clearProps: 'all' })
     gsap.from('#buy-section', { opacity: 0, y: 10, duration: 0.5, delay: 0.6, clearProps: 'all' })
   }, [product])
 
   useEffect(() => {
-    if (!selectedColor || !variants.length || !mountedRef.current) return
+    if (!selectedColor || !variants.length) return
     const colorModel = models.find(m =>
       m.title.toLowerCase().includes(selectedColor.toLowerCase().split(' ')[0])
     )
@@ -128,7 +142,7 @@ const ProductDetailPage = () => {
   }
 
   useEffect(() => {
-    if (!selectedColor || !mountedRef.current) return
+    if (!selectedColor) return
     const variant = variants.find(v =>
       v.color === selectedColor && getSizeBucket(v.size) === selectedSize
     )
@@ -185,75 +199,37 @@ const ProductDetailPage = () => {
       <div className="screen-max-width px-5">
         <div className="grid lg:grid-cols-2 gap-12 items-start">
 
-          {/* 3D Model */}
-          <div id="product-canvas" ref={canvasContainerRef}>
-            <div className="relative w-full h-[600px] bg-zinc-900 rounded-3xl overflow-hidden">
-              {canvasReady ? (
-                <Canvas
-                  gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-                  dpr={[1, 2]}
-                  frameloop="always"
-                  camera={{ position: [0, 0, 4], fov: 45, near: 0.1, far: 1000 }}
-                  onCreated={({ gl }) => {
-                    gl.toneMapping = THREE.ACESFilmicToneMapping
-                    gl.toneMappingExposure = 1
-                  }}
-                >
-                  <color attach="background" args={['#18181b']} />
-                  <ambientLight intensity={0.4} />
-                  <PerspectiveCamera makeDefault position={[0, 0, 4]} fov={45} />
-                  <Lights />
-                  <OrbitControls
-                    ref={controlRef}
-                    enableZoom={false}
-                    enablePan={false}
-                    rotateSpeed={0.4}
-                    minPolarAngle={Math.PI / 2}
-                    maxPolarAngle={Math.PI / 2}
-                    target={[0, 0, 0]}
-                  />
-                  <Suspense fallback={<CanvasLoader />}>
-                    <group position={[0, 0, 0]}>
-                      <IPhone
-                        scale={selectedSize === 'small' ? [15, 15, 15] : [17, 17, 17]}
-                        item={modelItem}
-                        size={selectedSize}
-                      />
-                    </group>
-                  </Suspense>
-                </Canvas>
-              ) : (
-                // Pre-canvas placeholder shown before IntersectionObserver fires
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-white animate-spin" />
-                    <p className="text-white/50 text-sm">Loading 3D model...</p>
-                  </div>
-                </div>
-              )}
+          {/* 3D Canvas
+              key={slug} forces full remount when product changes,
+              destroying old GL context and creating a fresh one */}
+          <div className="relative w-full h-[600px] bg-zinc-900 rounded-3xl overflow-hidden">
+            <ModelScene
+              key={slug}
+              modelItem={modelItem}
+              selectedSize={selectedSize}
+            />
 
-              {addSuccess && (
-                <div
-                  id="success-badge"
-                  className="absolute top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-full shadow-lg z-10 flex items-center gap-2 font-semibold"
-                >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  Added to cart!
-                </div>
-              )}
-
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-gray-400 text-sm flex items-center gap-2 bg-black/50 px-4 py-2 rounded-full backdrop-blur-sm">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
+            {addSuccess && (
+              <div
+                id="success-badge"
+                className="absolute top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-full shadow-lg z-10 flex items-center gap-2 font-semibold"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Drag to rotate
+                Added to cart!
               </div>
+            )}
+
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-gray-400 text-sm flex items-center gap-2 bg-black/50 px-4 py-2 rounded-full backdrop-blur-sm pointer-events-none">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
+              </svg>
+              Drag to rotate
             </div>
           </div>
 
-          {/* Product Options */}
+          {/* Product Info */}
           <div>
             <h1 id="product-title" className="text-5xl font-bold mb-4">{product.name}</h1>
             <p className="text-gray-400 text-lg mb-8">{product.description}</p>
@@ -327,9 +303,9 @@ const ProductDetailPage = () => {
             <div className="option-section mb-8">
               <h3 className="text-xl font-semibold mb-4">Quantity</h3>
               <div className="flex items-center gap-4">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-12 h-12 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center text-xl font-bold transition-colors" aria-label="Decrease quantity">−</button>
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-12 h-12 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center text-xl font-bold transition-colors">−</button>
                 <span className="text-2xl font-bold w-12 text-center">{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} className="w-12 h-12 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center text-xl font-bold transition-colors" aria-label="Increase quantity">+</button>
+                <button onClick={() => setQuantity(quantity + 1)} className="w-12 h-12 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center text-xl font-bold transition-colors">+</button>
               </div>
             </div>
 
@@ -388,6 +364,7 @@ const ProductDetailPage = () => {
               </ul>
             </div>
           </div>
+
         </div>
       </div>
     </section>
