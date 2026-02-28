@@ -12,7 +12,6 @@ const CartPage = () => {
   const { isAuthenticated, loading: authLoading } = useAuth()
   const navigate = useNavigate()
 
-  // Redirect to signin if user is not authenticated (wait for auth to load first)
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       toast.info('Not logged in', {
@@ -51,25 +50,22 @@ const CartPage = () => {
 
   return (
     <section className="w-screen min-h-screen bg-black text-white overflow-hidden relative py-20">
-      {/* Background gradients */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"></div>
       </div>
 
       <div className="relative z-10 screen-max-width px-5">
-        {/* Header */}
         <h1 id="cart-title" className="text-6xl md:text-8xl font-bold mb-12 opacity-0 translate-y-10">
           Shopping Cart
         </h1>
 
         {cart.length === 0 ? (
-          /* Empty Cart */
           <div className="text-center py-20">
             <div className="text-8xl mb-8">🛒</div>
             <h2 className="text-3xl font-bold mb-4">Your cart is empty</h2>
             <p className="text-gray-400 mb-8">Add some amazing products to get started!</p>
-            <Link 
+            <Link
               to="/"
               className="inline-block bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-8 py-4 rounded-full transition-all transform hover:scale-105"
             >
@@ -80,83 +76,87 @@ const CartPage = () => {
           <div className="grid lg:grid-cols-3 gap-12">
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-6">
-              {cart.map((item, index) => (
-                <div
-                  key={item.id}
-                  className="cart-item opacity-0 translate-y-10 bg-zinc-900/50 backdrop-blur-xl border border-zinc-800/50 rounded-3xl p-6 hover:border-zinc-700 transition-all"
-                >
-                  <div className="flex gap-6">
-                    {/* Product Image */}
-                    <div className="flex-shrink-0 w-32 h-32 bg-zinc-800 rounded-2xl overflow-hidden">
-                      {item.product?.images?.[0] ? (
-                        <img 
-                          src={item.product.images[0]} 
-                          alt={item.product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-5xl">
-                          📱
-                        </div>
-                      )}
-                    </div>
+              {cart.map((item) => {
+                // item.image is set at add-to-cart time from the selected variant's
+                // color-specific image. Fall back to product images only if missing.
+                const displayImage = item.image || item.product?.images?.[0]
 
-                    {/* Product Details */}
-                    <div className="flex-1">
-                      <h3 className="text-2xl font-bold mb-2">{item.product.name}</h3>
-                      <p className="text-gray-400 mb-4">
-                        {item.color && <span>{item.color}</span>}
-                        {item.size && <span> • {item.size}</span>}
-                        {item.storage && <span> • {item.storage}</span>}
-                      </p>
+                return (
+                  <div
+                    key={item.id}
+                    className="cart-item opacity-0 translate-y-10 bg-zinc-900/50 backdrop-blur-xl border border-zinc-800/50 rounded-3xl p-6 hover:border-zinc-700 transition-all"
+                  >
+                    <div className="flex gap-6">
+                      {/* Product Image — color-specific */}
+                      <div className="flex-shrink-0 w-32 h-32 bg-zinc-800 rounded-2xl overflow-hidden">
+                        {displayImage ? (
+                          <img
+                            src={displayImage}
+                            alt={item.product?.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-5xl">
+                            📱
+                          </div>
+                        )}
+                      </div>
 
-                      <div className="flex items-center justify-between">
-                        {/* Quantity Selector */}
-                        <div className="flex items-center gap-3 bg-black/30 rounded-xl p-2">
-                          <button
-                            onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                            className="w-8 h-8 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center transition-colors"
-                          >
-                            -
-                          </button>
-                          <span className="w-8 text-center font-semibold">{item.quantity}</span>
-                          <button
-                            onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                            className="w-8 h-8 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center transition-colors"
-                          >
-                            +
-                          </button>
-                        </div>
+                      {/* Product Details */}
+                      <div className="flex-1">
+                        <h3 className="text-2xl font-bold mb-2">{item.product.name}</h3>
+                        <p className="text-gray-400 mb-4">
+                          {item.color && <span>{item.color}</span>}
+                          {item.size && <span> • {item.size}</span>}
+                          {item.storage && <span> • {item.storage}</span>}
+                        </p>
 
-                        {/* Price */}
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-blue-400">
-                            ₹{formatIndianCurrency(Number(item.price || 0) * item.quantity)}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            ₹{formatIndianCurrency(Number(item.price || 0))} each
-                          </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 bg-black/30 rounded-xl p-2">
+                            <button
+                              onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                              className="w-8 h-8 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center transition-colors"
+                            >
+                              -
+                            </button>
+                            <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                            <button
+                              onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                              className="w-8 h-8 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center transition-colors"
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          <div className="text-right">
+                            <p className="text-2xl font-bold text-blue-400">
+                              ₹{formatIndianCurrency(Number(item.price || 0) * item.quantity)}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              ₹{formatIndianCurrency(Number(item.price || 0))} each
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Remove Button */}
-                    <button
-                      onClick={() => handleRemove(item.id)}
-                      className="flex-shrink-0 w-10 h-10 bg-red-500/10 hover:bg-red-500/20 rounded-lg flex items-center justify-center transition-colors group"
-                    >
-                      <svg className="w-5 h-5 text-red-400 group-hover:text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+                      {/* Remove Button */}
+                      <button
+                        onClick={() => handleRemove(item.id)}
+                        className="flex-shrink-0 w-10 h-10 bg-red-500/10 hover:bg-red-500/20 rounded-lg flex items-center justify-center transition-colors group"
+                      >
+                        <svg className="w-5 h-5 text-red-400 group-hover:text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             {/* Order Summary */}
             <div className="lg:col-span-1">
-              <div 
+              <div
                 id="cart-summary"
                 className="opacity-0 translate-x-10 sticky top-24 bg-zinc-900/50 backdrop-blur-xl border border-zinc-800/50 rounded-3xl p-8"
               >
@@ -198,7 +198,6 @@ const CartPage = () => {
                   Continue Shopping
                 </Link>
 
-                {/* Trust Badges */}
                 <div className="mt-8 pt-8 border-t border-zinc-800">
                   <div className="flex items-center gap-3 mb-3">
                     <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 24 24">
