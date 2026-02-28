@@ -8,9 +8,19 @@ router.get('/', authMiddleware, async (req, res) => {
   try {
     const cart = await prisma.cartItem.findMany({
       where: { userId: req.userId },
-      include: { product: true }
+      include: {
+        product: true,
+        variant: true   // include variant so we can get its images
+      }
     })
-    res.json(cart)
+
+    // Attach color-specific image to each item
+    const cartWithImages = cart.map(item => ({
+      ...item,
+      image: item.variant?.images?.[0] || item.product?.images?.[0] || null
+    }))
+
+    res.json(cartWithImages)
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch cart' })
   }
@@ -61,7 +71,7 @@ router.post('/', authMiddleware, async (req, res) => {
       cartItem = await prisma.cartItem.update({
         where: { id: existingItem.id },
         data: { quantity: existingItem.quantity + quantity },
-        include: { product: true }
+        include: { product: true, variant: true }
       })
     } else {
       cartItem = await prisma.cartItem.create({
@@ -75,11 +85,17 @@ router.post('/', authMiddleware, async (req, res) => {
           price: cartPrice,
           quantity
         },
-        include: { product: true }
+        include: { product: true, variant: true }
       })
     }
 
-    res.json(cartItem)
+    // Attach color-specific image
+    const itemWithImage = {
+      ...cartItem,
+      image: cartItem.variant?.images?.[0] || cartItem.product?.images?.[0] || null
+    }
+
+    res.json(itemWithImage)
   } catch (error) {
     console.error('Cart add error:', error)
     res.status(500).json({ error: 'Failed to add to cart' })
@@ -96,30 +112,28 @@ router.put('/:cartItemId', authMiddleware, async (req, res) => {
     }
 
     const cartItem = await prisma.cartItem.update({
-      where: {
-        id: cartItemId,
-        userId: req.userId
-      },
+      where: { id: cartItemId, userId: req.userId },
       data: { quantity },
-      include: { product: true }
+      include: { product: true, variant: true }
     })
 
-    res.json(cartItem)
+    const itemWithImage = {
+      ...cartItem,
+      image: cartItem.variant?.images?.[0] || cartItem.product?.images?.[0] || null
+    }
+
+    res.json(itemWithImage)
   } catch (error) {
     res.status(500).json({ error: 'Failed to update cart item' })
   }
 })
 
-// Remove item from cart
 router.delete('/:cartItemId', authMiddleware, async (req, res) => {
   try {
     const { cartItemId } = req.params
 
     await prisma.cartItem.delete({
-      where: {
-        id: cartItemId,
-        userId: req.userId
-      }
+      where: { id: cartItemId, userId: req.userId }
     })
 
     res.json({ success: true })
@@ -128,7 +142,6 @@ router.delete('/:cartItemId', authMiddleware, async (req, res) => {
   }
 })
 
-// Clear entire cart
 router.post('/clear', authMiddleware, async (req, res) => {
   try {
     await prisma.cartItem.deleteMany({
