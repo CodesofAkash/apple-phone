@@ -8,19 +8,9 @@ router.get('/', authMiddleware, async (req, res) => {
   try {
     const cart = await prisma.cartItem.findMany({
       where: { userId: req.userId },
-      include: {
-        product: true,
-        variant: true   // include variant so we can get its images
-      }
+      include: { product: true }
     })
-
-    // Attach color-specific image to each item
-    const cartWithImages = cart.map(item => ({
-      ...item,
-      image: item.variant?.images?.[0] || item.product?.images?.[0] || null
-    }))
-
-    res.json(cartWithImages)
+    res.json(cart)
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch cart' })
   }
@@ -34,20 +24,12 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Product ID and quantity required' })
     }
 
-    const product = await prisma.product.findUnique({
-      where: { id: productId }
-    })
-
-    if (!product) {
-      return res.status(404).json({ error: 'Product not found' })
-    }
+    const product = await prisma.product.findUnique({ where: { id: productId } })
+    if (!product) return res.status(404).json({ error: 'Product not found' })
 
     let variant = null
     if (variantId) {
-      variant = await prisma.productVariant.findUnique({
-        where: { id: variantId }
-      })
-
+      variant = await prisma.productVariant.findUnique({ where: { id: variantId } })
       if (!variant || variant.productId !== productId) {
         return res.status(400).json({ error: 'Invalid product variant' })
       }
@@ -71,7 +53,7 @@ router.post('/', authMiddleware, async (req, res) => {
       cartItem = await prisma.cartItem.update({
         where: { id: existingItem.id },
         data: { quantity: existingItem.quantity + quantity },
-        include: { product: true, variant: true }
+        include: { product: true }
       })
     } else {
       cartItem = await prisma.cartItem.create({
@@ -85,17 +67,11 @@ router.post('/', authMiddleware, async (req, res) => {
           price: cartPrice,
           quantity
         },
-        include: { product: true, variant: true }
+        include: { product: true }
       })
     }
 
-    // Attach color-specific image
-    const itemWithImage = {
-      ...cartItem,
-      image: cartItem.variant?.images?.[0] || cartItem.product?.images?.[0] || null
-    }
-
-    res.json(itemWithImage)
+    res.json(cartItem)
   } catch (error) {
     console.error('Cart add error:', error)
     res.status(500).json({ error: 'Failed to add to cart' })
@@ -114,15 +90,10 @@ router.put('/:cartItemId', authMiddleware, async (req, res) => {
     const cartItem = await prisma.cartItem.update({
       where: { id: cartItemId, userId: req.userId },
       data: { quantity },
-      include: { product: true, variant: true }
+      include: { product: true }
     })
 
-    const itemWithImage = {
-      ...cartItem,
-      image: cartItem.variant?.images?.[0] || cartItem.product?.images?.[0] || null
-    }
-
-    res.json(itemWithImage)
+    res.json(cartItem)
   } catch (error) {
     res.status(500).json({ error: 'Failed to update cart item' })
   }
@@ -130,12 +101,9 @@ router.put('/:cartItemId', authMiddleware, async (req, res) => {
 
 router.delete('/:cartItemId', authMiddleware, async (req, res) => {
   try {
-    const { cartItemId } = req.params
-
     await prisma.cartItem.delete({
-      where: { id: cartItemId, userId: req.userId }
+      where: { id: req.params.cartItemId, userId: req.userId }
     })
-
     res.json({ success: true })
   } catch (error) {
     res.status(500).json({ error: 'Failed to remove from cart' })
@@ -144,10 +112,7 @@ router.delete('/:cartItemId', authMiddleware, async (req, res) => {
 
 router.post('/clear', authMiddleware, async (req, res) => {
   try {
-    await prisma.cartItem.deleteMany({
-      where: { userId: req.userId }
-    })
-
+    await prisma.cartItem.deleteMany({ where: { userId: req.userId } })
     res.json({ success: true })
   } catch (error) {
     res.status(500).json({ error: 'Failed to clear cart' })

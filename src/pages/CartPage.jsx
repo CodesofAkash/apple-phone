@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
 import { formatIndianCurrency } from '../utils/index'
 import { toast } from 'sonner'
+import { models } from '../constants'
 
 const CartPage = () => {
   const { cart, removeFromCart, updateQuantity, getCartTotal, loading } = useCart()
@@ -77,9 +78,13 @@ const CartPage = () => {
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-6">
               {cart.map((item) => {
-                // item.image is set at add-to-cart time from the selected variant's
-                // color-specific image. Fall back to product images only if missing.
-                const displayImage = item.image || item.product?.images?.[0]
+                // Match item.color (e.g. "Black Titanium") against models array
+                // models[x].title is like "iPhone 15 Pro in Black Titanium"
+                // Fall back to product image if no match
+                const colorModel = models.find(m =>
+                  item.color && m.title.toLowerCase().includes(item.color.toLowerCase().split(' ')[0])
+                )
+                const displayImage = colorModel?.img || item.product?.images?.[0]
 
                 return (
                   <div
