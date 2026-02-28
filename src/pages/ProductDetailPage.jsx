@@ -37,7 +37,7 @@ const ModelScene = ({ modelItem, selectedSize }) => {
       gl={{ antialias: true, powerPreference: 'high-performance' }}
       dpr={[1, 2]}
       frameloop="always"
-      camera={{ position: [0, 0, 4], fov: 60 }}
+      camera={{ position: [0, 0, 4], fov: 75 }}
     >
       <ambientLight intensity={0.3} />
       <Lights />
