@@ -37,7 +37,7 @@ const ModelScene = ({ modelItem, selectedSize }) => {
       gl={{ antialias: true, powerPreference: 'high-performance' }}
       dpr={[1, 2]}
       frameloop="always"
-      camera={{ position: [0, 0, 4], fov: 35 }}
+      camera={{ position: [0, 0, 4], fov: 75 }}
     >
       <ambientLight intensity={0.3} />
       <Lights />
@@ -49,7 +49,7 @@ const ModelScene = ({ modelItem, selectedSize }) => {
       <Suspense fallback={<CanvasLoader />}>
         <group position={[0, 0, 0]}>
           <IPhone
-            scale={selectedSize === 'small' ? [20, 20, 20] : [23, 23, 23]}
+            scale={selectedSize === 'small' ? [15, 15, 15] : [17, 17, 17]}
             item={modelItem}
             size={selectedSize}
           />
