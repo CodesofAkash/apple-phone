@@ -191,9 +191,14 @@ const CartPage = () => {
 
                 <button
                   onClick={handleCheckout}
-                  className="w-full bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 rounded-xl transition-all transform hover:scale-105 mb-4"
+                  className="w-full relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl transition-all transform hover:scale-105 mb-4 shadow-lg shadow-blue-500/40 ring-2 ring-blue-500/50 hover:ring-blue-400/70 hover:shadow-blue-500/60"
                 >
-                  Proceed to Checkout
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    Proceed to Checkout
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </span>
                 </button>
 
                 <Link
