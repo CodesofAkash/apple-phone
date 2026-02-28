@@ -10,6 +10,7 @@ import cartRoutes from './routes/cart.js'
 import productRoutes from './routes/products.js'
 import paymentRoutes from './routes/payment.js'
 import orderRoutes from './routes/orders.js'
+import assetRoutes from './routes/assets.js'
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -62,6 +63,7 @@ app.use('/api/cart', cartRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/payment', paymentRoutes)
 app.use('/api/orders', orderRoutes)
+app.use('/api/assets', assetRoutes)
 
 app.get('/api/health', (req, res) => {
   res.set('Cache-Control', 'public, max-age=60')

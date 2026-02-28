@@ -34,8 +34,8 @@ export const replayImg = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v177
 export const playImg   = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162381/play_r4yu7b.svg'
 export const pauseImg  = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772162377/pause_v6fl77.svg'
 
-// 3D model — Cloudinary uploaded this as image type
-export const sceneGlb = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772237642/scene_bc9yxr.glb'
+
+export const sceneGlb = 'https://apple-phone-production.up.railway.app/api/assets/scene.glb'
 
 // ─── Utility ─────────────────────────────────────────────────────────────────
 export const formatIndianCurrency = (amount) =>
