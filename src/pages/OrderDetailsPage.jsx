@@ -4,6 +4,32 @@ import { useAuth } from '../context/AuthContext'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { formatIndianCurrency } from '../utils/index'
+import { models } from '../constants'
+
+// Get the color-specific phone image using the same logic as CartPage
+const getPhoneImage = (color, fallback) => {
+  const colorModel = models.find(m =>
+    color && m.title.toLowerCase().includes(color.toLowerCase().split(' ')[0])
+  )
+  return colorModel?.img || fallback || null
+}
+
+const getStatusColor = (status) => {
+  switch (status) {
+    case 'CONFIRMED':  return 'bg-green-500/10 text-green-400 border-green-500/30'
+    case 'PROCESSING': return 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+    case 'SHIPPED':    return 'bg-purple-500/10 text-purple-400 border-purple-500/30'
+    case 'DELIVERED':  return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+    case 'CANCELLED':
+    case 'REFUNDED':   return 'bg-red-500/10 text-red-400 border-red-500/30'
+    default:           return 'bg-gray-500/10 text-gray-400 border-gray-500/30'
+  }
+}
+
+const formatDate = (date) => new Date(date).toLocaleDateString('en-US', {
+  year: 'numeric', month: 'long', day: 'numeric',
+  hour: '2-digit', minute: '2-digit'
+})
 
 const OrderDetailsPage = () => {
   const { isAuthenticated, loading: authLoading } = useAuth()
@@ -21,26 +47,17 @@ const OrderDetailsPage = () => {
 
   useEffect(() => {
     if (authLoading) return
-    
-    if (!isAuthenticated) {
-      navigate('/signin')
-      return
-    }
+    if (!isAuthenticated) { navigate('/signin'); return }
+    if (!orderId) return
 
     const fetchOrder = async () => {
       try {
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
         const response = await fetch(`${API_URL}/api/orders/details/${orderId}`, {
           credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
         })
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch order details')
-        }
-
+        if (!response.ok) throw new Error('Failed to fetch order details')
         const data = await response.json()
         setOrder(data)
       } catch (err) {
@@ -51,48 +68,16 @@ const OrderDetailsPage = () => {
       }
     }
 
-    if (orderId) {
-      fetchOrder()
-    }
+    fetchOrder()
   }, [authLoading, isAuthenticated, navigate, orderId])
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'CONFIRMED':
-        return 'bg-green-500/10 text-green-400 border-green-500/30'
-      case 'PROCESSING':
-        return 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-      case 'SHIPPED':
-        return 'bg-purple-500/10 text-purple-400 border-purple-500/30'
-      case 'DELIVERED':
-        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-      case 'CANCELLED':
-      case 'REFUNDED':
-        return 'bg-red-500/10 text-red-400 border-red-500/30'
-      default:
-        return 'bg-gray-500/10 text-gray-400 border-gray-500/30'
-    }
-  }
-
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
 
   if (loading) {
     return (
       <section className="w-screen min-h-screen bg-black text-white py-20">
-        <div className="screen-max-width px-5">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <div className="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-gray-400">Loading order details...</p>
-            </div>
+        <div className="screen-max-width px-5 flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading order details...</p>
           </div>
         </div>
       </section>
@@ -139,49 +124,60 @@ const OrderDetailsPage = () => {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Order Items */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Order Items Section */}
+
+            {/* Order Items */}
             <div className="order-section opacity-0 translate-y-10">
               <h2 className="text-2xl font-bold mb-4">Order Items</h2>
               <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl overflow-hidden">
-                {order.items && order.items.length > 0 ? (
+                {order.items?.length > 0 ? (
                   <div className="divide-y divide-zinc-800">
-                    {order.items.map((item) => (
-                      <div key={item.id} className="p-6 hover:bg-zinc-800/30 transition-colors">
-                        <div className="flex gap-6">
-                          {item.productImage && (
-                            <img
-                              src={item.productImage}
-                              alt={item.productName}
-                              className="w-24 h-24 object-cover rounded-lg"
-                            />
-                          )}
-                          <div className="flex-1">
-                            <h3 className="text-lg font-semibold mb-2">{item.productName}</h3>
-                            <div className="grid grid-cols-3 gap-4 text-sm">
-                              <div>
-                                <p className="text-gray-500">Quantity</p>
-                                <p className="text-white">{item.quantity}</p>
-                              </div>
-                              <div>
-                                <p className="text-gray-500">Unit Price</p>
-                                <p className="text-white">₹{formatIndianCurrency(item.price)}</p>
-                              </div>
-                              <div>
-                                <p className="text-gray-500">Subtotal</p>
-                                <p className="text-white font-semibold">₹{formatIndianCurrency(Number(item.price) * item.quantity)}</p>
+                    {order.items.map((item) => {
+                      // Derive color-specific image from item.color using models constant
+                      const displayImage = getPhoneImage(item.color, item.productImage)
+
+                      return (
+                        <div key={item.id} className="p-6 hover:bg-zinc-800/30 transition-colors">
+                          <div className="flex gap-6">
+                            <div className="w-24 h-24 rounded-lg overflow-hidden bg-zinc-800 flex-shrink-0">
+                              {displayImage ? (
+                                <img
+                                  src={displayImage}
+                                  alt={item.productName}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-4xl">📱</div>
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold mb-1">{item.productName}</h3>
+                              {item.color && (
+                                <p className="text-sm text-gray-400 mb-2">{item.color}</p>
+                              )}
+                              <div className="grid grid-cols-3 gap-4 text-sm">
+                                <div>
+                                  <p className="text-gray-500">Quantity</p>
+                                  <p className="text-white">{item.quantity}</p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-500">Unit Price</p>
+                                  <p className="text-white">₹{formatIndianCurrency(item.price)}</p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-500">Subtotal</p>
+                                  <p className="text-white font-semibold">₹{formatIndianCurrency(Number(item.price) * item.quantity)}</p>
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 ) : (
-                  <div className="p-6 text-center text-gray-400">
-                    No items in this order
-                  </div>
+                  <div className="p-6 text-center text-gray-400">No items in this order</div>
                 )}
               </div>
             </div>
@@ -195,9 +191,7 @@ const OrderDetailsPage = () => {
                   <p className="text-gray-400">{order.shippingAddress.street}</p>
                   <p className="text-gray-400">{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}</p>
                   <p className="text-gray-400">{order.shippingAddress.country}</p>
-                  {order.shippingAddress.phone && (
-                    <p className="text-gray-400 mt-2">{order.shippingAddress.phone}</p>
-                  )}
+                  {order.shippingAddress.phone && <p className="text-gray-400 mt-2">{order.shippingAddress.phone}</p>}
                 </div>
               </div>
             )}
@@ -206,10 +200,7 @@ const OrderDetailsPage = () => {
           {/* Order Summary */}
           <div className="order-section opacity-0 translate-y-10">
             <div className="sticky top-24 bg-zinc-900/50 backdrop-blur-xl border border-zinc-800/50 rounded-2xl p-8 space-y-6">
-              <div>
-                <h3 className="text-xl font-bold mb-4">Order Summary</h3>
-              </div>
-
+              <h3 className="text-xl font-bold">Order Summary</h3>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Subtotal</span>
@@ -224,22 +215,16 @@ const OrderDetailsPage = () => {
                   <span className="text-white">₹{formatIndianCurrency(Number(order.tax || order.total - order.total / 1.08))}</span>
                 </div>
               </div>
-
               <div className="h-px bg-zinc-700"></div>
-
               <div className="flex justify-between text-2xl font-bold">
                 <span>Total</span>
                 <span className="text-blue-400">₹{formatIndianCurrency(order.total)}</span>
               </div>
-
               <div className="h-px bg-zinc-700"></div>
-
               <div className="space-y-3">
                 <div>
                   <p className="text-gray-400 text-sm mb-1">Payment Status</p>
-                  <p className={`font-semibold text-lg ${order.paymentStatus === 'PAID' ? 'text-green-400' : 'text-gray-400'}`}>
-                    {order.paymentStatus}
-                  </p>
+                  <p className={`font-semibold text-lg ${order.paymentStatus === 'PAID' ? 'text-green-400' : 'text-gray-400'}`}>{order.paymentStatus}</p>
                 </div>
                 <div>
                   <p className="text-gray-400 text-sm mb-1">Payment Method</p>
@@ -252,7 +237,6 @@ const OrderDetailsPage = () => {
                   </div>
                 )}
               </div>
-
               <Link
                 to="/orders"
                 className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors"
