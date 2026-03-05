@@ -8,7 +8,7 @@ const router = express.Router()
 // which causes Three.js GLTFLoader to reject it silently.
 // This route fetches it server-side and re-serves with model/gltf-binary.
 router.get('/scene.glb', (req, res) => {
-  const cloudinaryUrl = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772237642/scene_bc9yxr.glb'
+  const cloudinaryUrl = 'https://res.cloudinary.com/ddawd3kp5/image/upload/v1772641137/scene_h7hwag.glb'
 
   res.set({
     'Content-Type': 'model/gltf-binary',
