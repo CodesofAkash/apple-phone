@@ -1,279 +1,168 @@
-# Apple iPhone E-Commerce
+# Apple Phone — 3D E-Commerce
 
-A full-stack iPhone e-commerce web application inspired by Apple's design language. Featuring 3D interactive iPhone model viewing, GSAP-powered animations, Stripe payments, JWT authentication, and a complete order management flow.
+*(repository: `apple-phone`)*
 
----
+An interactive, Apple-style product site for a fictional iPhone lineup: a real-time 3D device
+viewer, a full cart-to-checkout flow with Stripe payments, and a custom JWT authentication system
+with password reset — built as a full-stack e-commerce reference project rather than a landing
+page.
+
+## Overview
+
+The engineering focus here is the complete commerce loop, not just the 3D model. Product variants
+(color, storage, size) carry per-variant pricing; the cart, checkout, and order history all
+operate on top of a normal relational schema via Prisma; payments go through Stripe Payment
+Intents with a proper client-side Elements form, not a mocked checkout button. The 3D model itself
+is proxied server-side from Cloudinary so the browser receives the correct `model/gltf-binary`
+MIME type, which is a real, easy-to-get-wrong detail when serving GLB files from a generic asset
+host.
 
 ## Features
 
-- **3D Product Viewer** — Interactive iPhone model rendered with Three.js and React Three Fiber, proxied from Cloudinary with correct MIME type handling
-- **GSAP Animations** — Scroll-triggered and timeline-based animations throughout the landing page (Hero, Highlights, HowItWorks)
-- **Authentication** — JWT-based auth stored in secure `HttpOnly` cookies; sign-up, sign-in, sign-out, forgot/reset password via OTP email
-- **Product Catalog** — Products with multiple variants (color, storage, size) and per-variant pricing
-- **Shopping Cart** — Add, update, and remove items; per-variant cart lines with denormalized price
-- **Checkout & Payments** — Stripe Payment Intents; client-side Elements form; optional address save
-- **Order Management** — Order creation, order history, per-order detail view, order tracking with status progression
-- **Address Book** — CRUD for saved shipping addresses; duplicate detection on save
-- **Error Monitoring** — Sentry integrated at runtime (production-only)
-- **Performance** — Gzip compression, Helmet security headers, manual Rollup chunk splitting, service worker
-- **Email** — Transactional OTP emails via Resend
-
----
+- **Interactive 3D product viewer** — Three.js + React Three Fiber, with the model proxied
+  server-side for correct content-type handling
+- **GSAP animations** — scroll-triggered and timeline-based, across Hero, Highlights, and
+  How-It-Works sections
+- **Custom authentication** — JWT stored in an `HttpOnly` cookie; sign-up, sign-in, sign-out, and
+  forgot/reset password via a one-time email code
+- **Product catalog** with multi-variant products (color, storage, size) and per-variant pricing
+- **Cart** — add, update, remove, with denormalized per-variant pricing on each line
+- **Checkout & payments** — Stripe Payment Intents, client-side Elements form, optional address
+  save on order
+- **Order management** — order creation, history, per-order detail, and a status-progression
+  timeline (`CONFIRMED` → `SHIPPED` → `DELIVERED`, etc.)
+- **Address book** with duplicate detection on save
+- **Error monitoring** via Sentry, production-only
+- **Transactional email** (password-reset codes) via Resend
 
 ## Tech Stack
 
-### Frontend
+**Frontend**
+React 19, React Router v7, Vite 7, Tailwind CSS 4, Three.js + React Three Fiber + Drei, GSAP,
+Stripe Elements (`@stripe/react-stripe-js`), Sentry (`@sentry/react`)
 
-| Library | Purpose |
-|---|---|
-| React 19 | UI framework |
-| React Router DOM v7 | Client-side routing |
-| Vite 7 | Build tool & dev server |
-| Tailwind CSS v4 | Utility-first styling |
-| Three.js + React Three Fiber + Drei | 3D model rendering |
-| GSAP + @gsap/react | Animations |
-| @stripe/react-stripe-js + @stripe/stripe-js | Payment Elements |
-| Sonner | Toast notifications |
-| @sentry/react | Error monitoring |
+**Backend**
+Express 5, Prisma ORM with `@prisma/adapter-pg`, bcryptjs, JSON Web Tokens, the Stripe Node SDK,
+Resend, Helmet, `cors`, `compression`
 
-### Backend
+**Database**
+PostgreSQL via Prisma. Models: `User`, `Product`, `ProductVariant`, `CartItem`, `Order`,
+`OrderItem`, `OrderStatusHistory`, `Address`.
 
-| Library | Purpose |
-|---|---|
-| Express v5 | HTTP server |
-| Prisma ORM + `@prisma/adapter-pg` | Database access via PostgreSQL connection pool |
-| pg | PostgreSQL driver / connection pool |
-| bcryptjs | Password hashing |
-| jsonwebtoken | JWT generation & verification |
-| Stripe Node SDK | Payment Intent creation |
-| Resend | Transactional email (OTP) |
-| Helmet | Security headers |
-| cors | Cross-origin resource sharing |
-| compression | Gzip response compression |
-| cookie-parser | JWT cookie parsing |
+## Architecture
 
-### Database
-
-PostgreSQL managed via Prisma. Models: `User`, `Product`, `ProductVariant`, `CartItem`, `Order`, `OrderItem`, `OrderStatusHistory`, `Address`.
-
----
+The frontend (Vite/React) and backend (Express) are two separate deployments — a static SPA on
+Vercel and a Node API on a separate host — communicating over `VITE_API_URL` with credentialed
+requests so the JWT cookie is sent cross-origin. `server/index.js` maintains an explicit
+`allowedOrigins` list for CORS rather than a wildcard, since the auth cookie is `HttpOnly` and
+credentialed CORS requires an exact origin match.
 
 ## Project Structure
 
 ```
-apple_website/
-├── index.html                  # Vite HTML entry
-├── vite.config.js              # Vite + Tailwind + chunk splitting
-├── vercel.json                 # Vercel SPA rewrite rule
-├── prisma/
-│   ├── schema.prisma           # Database schema
-│   ├── prisma.config.js        # Prisma config
-│   └── seed.js                 # Database seed script
-├── server/
-│   ├── index.js                # Express app entry — CORS, middleware, route mounting
-│   ├── middleware/
-│   │   └── auth.js             # JWT auth middleware (cookie + Authorization header)
-│   ├── routes/
-│   │   ├── auth.js             # Sign-up, sign-in, sign-out, forgot/reset password, /me
-│   │   ├── user.js             # Profile, address CRUD
-│   │   ├── products.js         # Product + variant fetch by slug
-│   │   ├── cart.js             # Cart CRUD (auth-protected)
-│   │   ├── payment.js          # Stripe Payment Intent creation
-│   │   ├── orders.js           # Order creation, listing, detail, status update
-│   │   └── assets.js           # GLB model proxy (correct MIME type from Cloudinary)
-│   └── utils/
-│       ├── jwt.js              # Token generation, verification, cookie helpers
-│       ├── email.js            # Resend OTP email
-│       └── prisma.js           # Prisma client singleton with pg pool adapter
-└── src/
-    ├── main.jsx                # React entry point + Sentry init
-    ├── App.jsx                 # Router, providers, lazy-loaded routes
-    ├── instrument.js           # Sentry browser instrumentation
-    ├── components/             # Reusable UI (Navbar, Footer, Hero, Model, etc.)
-    ├── pages/                  # Route-level page components
-    ├── context/
-    │   ├── AuthContext.jsx     # Auth state, sign-in/out helpers
-    │   └── CartContext.jsx     # Cart state and API calls
-    ├── constants/index.js      # Shared static data
-    └── utils/                  # Animations, formatting helpers
+prisma/
+├── schema.prisma
+└── seed.js
+
+server/
+├── index.js               # Express entry — CORS, middleware, route mounting
+├── middleware/auth.js       # JWT verification (cookie or Authorization header)
+├── routes/                  # auth, user, products, cart, payment, orders, assets
+└── utils/                    # JWT helpers, email, Prisma client singleton
+
+src/
+├── main.jsx                 # Entry point, Sentry init
+├── App.jsx                   # Router, providers, lazy-loaded routes
+├── components/                 # Navbar, Hero, 3D Model viewer, etc.
+├── pages/
+├── context/                    # AuthContext, CartContext
+└── utils/
 ```
 
----
-
-## Local Development Setup
+## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
-- A PostgreSQL database (local or hosted)
-- Stripe account
-- Resend account (for OTP emails)
-- Sentry project (optional — monitoring is disabled outside production)
+- A PostgreSQL database
+- Stripe and Resend accounts
 
-### 1. Install dependencies
+### Install
 
 ```bash
 npm install
 ```
 
-### 2. Environment variables
+### Environment variables
 
-Create a `.env` file in the project root:
+Backend (`.env` in project root):
 
-```env
-# ── Backend ──────────────────────────────────────────────
-DATABASE_URL=postgresql://user:password@host:5432/dbname
-JWT_SECRET=your-very-strong-secret
-STRIPE_SECRET_KEY=sk_test_...
-RESEND_API_KEY=re_...
-PORT=5000                          # optional, defaults to 5000
-
-# ── Frontend (Vite — must be prefixed VITE_) ──────────────
-VITE_API_URL=http://localhost:5000
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
-VITE_SENTRY_DSN=https://...@sentry.io/...   # optional
+```
+DATABASE_URL
+DIRECT_URL
+JWT_SECRET
+STRIPE_SECRET_KEY
+RESEND_API_KEY
+CLOUDINARY_URL
+CLIENT_URL
+NODE_ENV
+PORT                    # optional, defaults to 5000
 ```
 
-### 3. Set up the database
+Frontend (must be prefixed `VITE_`):
+
+```
+VITE_API_URL
+VITE_STRIPE_PUBLISHABLE_KEY
+VITE_SENTRY_DSN          # optional
+```
+
+### Database
 
 ```bash
-# Push the Prisma schema to your database
 npm run db:push
-
-# (Optional) Seed initial product data
-npm run db:seed
+npm run db:seed   # optional — sample product data
 ```
 
-### 4. Run the development servers
+### Run
 
 ```bash
-# Start both Vite dev server (port 5173) and Express server (port 5000) concurrently
-npm run dev:all
-
-# Or run them separately:
-npm run dev       # Vite frontend only
-npm run server    # Express backend only
+npm run dev:all     # Vite (5173) + Express (5000) together
+# or separately:
+npm run dev          # frontend only
+npm run server         # backend only
 ```
-
-### Available Scripts
-
-| Command | Description |
-|---|---|
-| `npm run dev` | Start Vite dev server |
-| `npm run server` | Start Express API server |
-| `npm run dev:all` | Start both concurrently |
-| `npm run build` | `prisma generate` + `vite build` |
-| `npm start` | Start Express server (production) |
-| `npm run preview` | Preview the Vite production build |
-| `npm run lint` | Run ESLint |
-| `npm run db:generate` | Regenerate Prisma client |
-| `npm run db:push` | Push schema changes to database |
-| `npm run db:studio` | Open Prisma Studio GUI |
-| `npm run db:seed` | Run the database seed script |
-
----
 
 ## API Endpoints
 
-All routes are prefixed with `/api`. Protected routes require a valid `auth_token` cookie or `Authorization: Bearer <token>` header.
+All routes are prefixed `/api`. Protected routes require a valid `auth_token` cookie or
+`Authorization: Bearer <token>` header.
 
-### Auth — `/api/auth`
-
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `POST` | `/signup` | — | Register a new user |
-| `POST` | `/signin` | — | Sign in, sets `auth_token` cookie |
-| `POST` | `/signout` | — | Clears `auth_token` cookie |
-| `POST` | `/forgot-password` | — | Send OTP to email |
-| `POST` | `/reset-password` | — | Verify OTP and update password |
-| `GET` | `/me` | ✓ | Return current user object |
-
-### User — `/api/user`
-
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `GET` | `/profile` | ✓ | Get profile with orders and addresses |
-| `PUT` | `/profile` | ✓ | Update name/email |
-| `GET` | `/addresses` | ✓ | List saved addresses |
-| `POST` | `/addresses` | ✓ | Create a new address |
-| `PUT` | `/addresses/:addressId` | ✓ | Update an address |
-| `DELETE` | `/addresses/:addressId` | ✓ | Delete an address |
-
-### Products — `/api/products`
-
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `GET` | `/:slug` | — | Get product and all variants by slug |
-
-### Cart — `/api/cart`
-
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `GET` | `/` | ✓ | Get cart items for current user |
-| `POST` | `/` | ✓ | Add item (or increment quantity) |
-| `PUT` | `/:cartItemId` | ✓ | Update item quantity |
-| `DELETE` | `/:cartItemId` | ✓ | Remove item |
-| `POST` | `/clear` | ✓ | Remove all items from cart |
-
-### Payment — `/api/payment`
-
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `POST` | `/create-payment-intent` | ✓ | Create Stripe Payment Intent; returns `clientSecret` |
-
-### Orders — `/api/orders`
-
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `POST` | `/create` | ✓ | Create order post-payment; optionally saves address |
-| `GET` | `/` | ✓ | List all orders for current user |
-| `GET` | `/details/:orderId` | ✓ | Get order by UUID (with items, address, history) |
-| `GET` | `/:orderNumber` | ✓ | Get order by order number (e.g. `ORD-...`) |
-| `PUT` | `/:orderId/status` | ✓ | Update order status (`CONFIRMED` → `SHIPPED` → `DELIVERED` etc.) |
-
-### Assets — `/api/assets`
-
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `GET` | `/scene.glb` | — | Proxy the iPhone GLB model from Cloudinary with correct `model/gltf-binary` MIME type |
-
-### Health
-
-| Method | Path | Description |
+| Group | Base path | Notable routes |
 |---|---|---|
-| `GET` | `/api/health` | Returns `{ status: "OK", timestamp }` |
-
----
+| Auth | `/api/auth` | `signup`, `signin`, `signout`, `forgot-password`, `reset-password`, `me` |
+| User | `/api/user` | `profile`, `addresses` (CRUD) |
+| Products | `/api/products` | `:slug` |
+| Cart | `/api/cart` | CRUD + `clear` |
+| Payment | `/api/payment` | `create-payment-intent` |
+| Orders | `/api/orders` | `create`, list, detail by id or order number, status update |
+| Assets | `/api/assets` | `scene.glb` — GLB model proxy with correct MIME type |
+| Health | `/api/health` | Liveness check |
 
 ## Deployment
 
-### Frontend — Vercel
+- **Frontend** — Vercel, static build (`npm run build`, output `dist`), with `vercel.json`
+  rewriting all paths to `/` for client-side routing.
+- **Backend** — designed for Railway or any Node host that provides `PORT` and binds to
+  `0.0.0.0`; the production frontend origin must be present in `server/index.js`'s
+  `allowedOrigins`.
 
-The `vercel.json` rewrites all paths to `/` so React Router handles client-side navigation:
+## Current Status
 
-```json
-{
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
-}
-```
-
-**Steps:**
-1. Connect the repository to Vercel.
-2. Set build command to `npm run build` and output directory to `dist`.
-3. Add all `VITE_*` environment variables in the Vercel project settings.
-
-### Backend — Railway (or any Node.js host)
-
-The Express server binds to `0.0.0.0` and reads `PORT` from the environment, which is the expected behaviour for Railway, Render, Fly.io, etc.
-
-**Steps:**
-1. Deploy the repository to Railway.
-2. Set the start command to `npm start`.
-3. Add all backend environment variables: `DATABASE_URL`, `JWT_SECRET`, `STRIPE_SECRET_KEY`, `RESEND_API_KEY`.
-4. The production Vercel domain must be added to the `allowedOrigins` array in `server/index.js`.
-
-### Build notes
-
-- `npm run build` runs `prisma generate` before `vite build` to ensure the Prisma client is up-to-date before bundling.
-- Console statements and debugger calls are stripped by Terser in production builds.
-- Rollup manually splits chunks into `vendor`, `three`, `gsap`, and `payments` to improve caching.
+The frontend is deployed and live. **The backend API is currently offline** — its Railway
+deployment is no longer reachable, which also means its PostgreSQL database (hosted on the same
+Railway project) is unavailable, and a separate Supabase project referenced by the client is
+paused. As a result, live product data, auth, cart, and checkout are not currently functional on
+the deployed frontend, even though all of that logic is implemented and was working. This is an
+infrastructure/hosting gap, not an incomplete feature — restoring it is a matter of redeploying
+the backend and re-provisioning the database, not writing new code.
